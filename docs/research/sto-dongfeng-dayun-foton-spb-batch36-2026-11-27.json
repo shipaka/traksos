@@ -1,0 +1,1700 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Research staging only; not production import",
+  "publication_gate": "Confirm actual operation, legal operator, heavy truck capability, precise coordinates, reuse rights, duplicates and admin approval; dealer directory alone not sufficient. No calls or FNS extracts. No automated outreach.",
+  "records": [
+    {
+      "id": "leon-kt-vitebsky",
+      "name": "Леон КТ / Леон Северо-Запад",
+      "region": "Санкт-Петербург",
+      "address": "Витебский просп., 3, лит. А",
+      "country": "Россия",
+      "phone": "+7 963 242-41-63",
+      "email": "service@leon-sto.ru",
+      "hours": null,
+      "services": [
+        "грузовой ремонт"
+      ],
+      "source_urls": [
+        "https://www.leon-sto.ru/",
+        "https://foton-leon.ru/about/contacts"
+      ],
+      "notes": "Ремонт среднетоннажных грузовиков Hino, Isuzu, Foton; Индустрия движения указана по тому же адресу — уточнить оператор, не считать второй точкой. Подтвердить прием грузовиков, оператора, координаты, актуальность контактов. ",
+      "operator_group": "leon-kt-vitebsky",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "profi-truck-sertolovo",
+      "name": "Профи Трак Сервис СПБ",
+      "region": "Ленинградская область",
+      "address": "Сертолово, Восточно-Выборгское шоссе, 14, корп. 1",
+      "country": "Россия",
+      "phone": "+7 931 576-00-14",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой ремонт"
+      ],
+      "source_urls": [
+        "https://profi-trak-servis.clients.site/"
+      ],
+      "notes": "ИНН 4706053749, ОГРН 1224700019873 опубликованы в карточке; не проверены ФНС. Ремонт грузовиков и прицепов. Подтвердить прием грузовиков, оператора, координаты, актуальность контактов. ",
+      "operator_group": "profi-truck-sertolovo",
+      "evidence": "business_profile",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "truckservis-sertolovo35",
+      "name": "Truck Servis",
+      "region": "Ленинградская область",
+      "address": "Сертолово, Восточно-Выборгское шоссе, 35",
+      "country": "Россия",
+      "phone": null,
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой ремонт"
+      ],
+      "source_urls": [
+        "https://truck-servis.clients.site/"
+      ],
+      "notes": "Доступны Telegram и WhatsApp через сайт, номер в открытом тексте не опубликован. Грузовики, прицепы, кузовные работы, диагностика. Подтвердить прием грузовиков, оператора, координаты, актуальность контактов. ",
+      "operator_group": "truckservis-sertolovo35",
+      "evidence": "business_profile",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "poehali-lesnoe",
+      "name": "Поехали",
+      "region": "Ленинградская область",
+      "address": "Всеволожский район, пос. Лесное, Куйвозовское сельское поселение",
+      "country": "Россия",
+      "phone": "+7 911 299-97-54",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой ремонт"
+      ],
+      "source_urls": [
+        "https://www.poehali-spb.ru/"
+      ],
+      "notes": "Китайские грузовики; номер здания и точный въезд уточнить. Подтвердить прием грузовиков, оператора, координаты, актуальность контактов. ",
+      "operator_group": "poehali-lesnoe",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "geometria-parnas",
+      "name": "СТО Геометрия",
+      "region": "Санкт-Петербург",
+      "address": "Парнас, 6-й Верхний переулок, 8",
+      "country": "Россия",
+      "phone": "+7 812 643-28-70",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой ремонт"
+      ],
+      "source_urls": [
+        "https://stogeometria.ru/remont-pnevmatiki/"
+      ],
+      "notes": "Пневматика грузовиков и прицепов, двигатели, трансмиссия, электрооборудование. Подтвердить прием грузовиков, оператора, координаты, актуальность контактов. ",
+      "operator_group": "geometria-parnas",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "rai-vsevolozhsk",
+      "name": "Рай Авто — Всеволожск",
+      "region": "Ленинградская область",
+      "address": "Всеволожск, Индустриальная ул., 4",
+      "country": "Россия",
+      "phone": "+7 812 777-07-09",
+      "email": null,
+      "hours": null,
+      "services": [
+        "кузовной ремонт грузовиков и прицепов"
+      ],
+      "source_urls": [
+        "https://www.rai-avto.ru/truck-paint"
+      ],
+      "notes": "Кузов, рамы, грузовики и прицепы. Подтвердить прием грузовиков, оператора, координаты, актуальность контактов. ",
+      "operator_group": "rai-avto",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "rai-sertolovo",
+      "name": "Рай Авто — Сертолово",
+      "region": "Ленинградская область",
+      "address": "Сертолово, Индустриальная ул., 3, корп. 1",
+      "country": "Россия",
+      "phone": "+7 812 335-54-75",
+      "email": null,
+      "hours": null,
+      "services": [
+        "кузовной ремонт грузовиков и прицепов"
+      ],
+      "source_urls": [
+        "https://www.rai-avto.ru/truck-paint"
+      ],
+      "notes": "Кузовной ремонт указан на странице грузового сервиса; подтвердить самостоятельность площадки. Подтвердить прием грузовиков, оператора, координаты, актуальность контактов. ",
+      "operator_group": "rai-avto",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "dc-sever-arkhangelsk",
+      "name": "ДЦ Север",
+      "region": "Архангельская область",
+      "address": "Архангельск, Окружное шоссе, 3, корп. 1",
+      "country": "Россия",
+      "phone": "8 800 775-08-88",
+      "email": "stoarhangelsk@dcbelarus.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО Dongfeng"
+      ],
+      "source_urls": [
+        "https://dong-fengrus.ru/najti-dilera"
+      ],
+      "notes": "Круглосуточный сервис указан в источнике. Подтвердить прием грузовиков, оператора, координаты, актуальность контактов. ",
+      "operator_group": "dcbelarus",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "transavtokomplekt-belgorod",
+      "name": "Трансавтокомплект",
+      "region": "Белгородская область",
+      "address": "Белгород, Студенческая ул., 21Г",
+      "country": "Россия",
+      "phone": "8 800 505-65-21",
+      "email": "kamaz@kamazcenter.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО Dongfeng"
+      ],
+      "source_urls": [
+        "https://dong-fengrus.ru/najti-dilera"
+      ],
+      "notes": "Сервис ежедневно 08:00–20:00. Подтвердить прием грузовиков, оператора, координаты, актуальность контактов. ",
+      "operator_group": "transavtokomplekt-belgorod",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "fredservice-vologda",
+      "name": "FredService",
+      "region": "Вологодская область",
+      "address": "Вологда, ул. Преображенского, 30А",
+      "country": "Россия",
+      "phone": "8 800 550-54-64",
+      "email": "info@fredservice.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО Dongfeng"
+      ],
+      "source_urls": [
+        "https://dong-fengrus.ru/najti-dilera"
+      ],
+      "notes": "ИП Проворов А.А. в источнике; второй номер +7 921 127-23-93. Подтвердить прием грузовиков, оператора, координаты, актуальность контактов. ",
+      "operator_group": "fredservice-vologda",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "briglogistik-volgograd",
+      "name": "БРИГ-Логистик",
+      "region": "Волгоградская область",
+      "address": "Волгоград, Краснополянская ул., 55Г",
+      "country": "Россия",
+      "phone": "+7 905 397-88-89",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО Dongfeng"
+      ],
+      "source_urls": [
+        "https://dong-fengrus.ru/najti-dilera"
+      ],
+      "notes": "Подтвердить прием грузовиков, оператора, координаты, актуальность контактов. ",
+      "operator_group": "briglogistik-volgograd",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "plaza-izhevsk",
+      "name": "Плаза",
+      "region": "Удмуртская Республика",
+      "address": "Ижевск, Совхозная ул., 127",
+      "country": "Россия",
+      "phone": "+7 3412 32-10-00",
+      "email": "autotehcomudm@mail.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО Dongfeng"
+      ],
+      "source_urls": [
+        "https://dong-fengrus.ru/najti-dilera"
+      ],
+      "notes": "Подтвердить прием грузовиков, оператора, координаты, актуальность контактов. ",
+      "operator_group": "plaza-izhevsk",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "novoscan-iskitim",
+      "name": "НовоСкан",
+      "region": "Новосибирская область",
+      "address": "Искитим, Юбилейный просп., 1В",
+      "country": "Россия",
+      "phone": "+7 38343 9-20-50",
+      "email": "service@novoscan.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО Dongfeng"
+      ],
+      "source_urls": [
+        "https://dong-fengrus.ru/najti-dilera"
+      ],
+      "notes": "Подтвердить прием грузовиков, оператора, координаты, актуальность контактов. ",
+      "operator_group": "novoscan-iskitim",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "dc-stolitsa-mkad85",
+      "name": "ДЦ Столица",
+      "region": "Московская область",
+      "address": "Мытищинский округ, МКАД 85 км, ТП3 Алтуфьево, Автомобильный проезд, вл. 1, стр. 1",
+      "country": "Россия",
+      "phone": "8 800 234-91-41",
+      "email": "stomoskva@dcbelarus.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО Dongfeng"
+      ],
+      "source_urls": [
+        "https://dong-fengrus.ru/najti-dilera"
+      ],
+      "notes": "Круглосуточный сервис. Подтвердить прием грузовиков, оператора, координаты, актуальность контактов. ",
+      "operator_group": "dcbelarus",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "sp-start-chelny",
+      "name": "СП Старт",
+      "region": "Республика Татарстан",
+      "address": "Набережные Челны, Промышленная ул., 68",
+      "country": "Россия",
+      "phone": "8 800 222-59-90",
+      "email": "info@16start.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО Dongfeng"
+      ],
+      "source_urls": [
+        "https://dong-fengrus.ru/najti-dilera"
+      ],
+      "notes": "Подтвердить прием грузовиков, оператора, координаты, актуальность контактов. ",
+      "operator_group": "sp-start-chelny",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "hropal-nevinnomyssk",
+      "name": "Хропаль-Авто",
+      "region": "Ставропольский край",
+      "address": "Невинномысск, ул. Докучаева, 1Б",
+      "country": "Россия",
+      "phone": "+7 918 889-53-93",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО Dongfeng"
+      ],
+      "source_urls": [
+        "https://dong-fengrus.ru/najti-dilera"
+      ],
+      "notes": "Подтвердить прием грузовиков, оператора, координаты, актуальность контактов. ",
+      "operator_group": "hropal-nevinnomyssk",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "eva-logistik-m7",
+      "name": "ЕВА Логистик",
+      "region": "Нижегородская область",
+      "address": "Дзержинский округ, М-7 Волга, 392-й км, пом. 2",
+      "country": "Россия",
+      "phone": null,
+      "email": "erohov.v@yandex.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО Dongfeng"
+      ],
+      "source_urls": [
+        "https://dong-fengrus.ru/najti-dilera"
+      ],
+      "notes": "Источник прямо указывает связь по e-mail; телефон не найден. Подтвердить прием грузовиков, оператора, координаты, актуальность контактов. ",
+      "operator_group": "eva-logistik-m7",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "autosistema-nestyukovo",
+      "name": "Автосистема",
+      "region": "Пермский край",
+      "address": "д. Нестюково, Трактовая ул., 1/3",
+      "country": "Россия",
+      "phone": "+7 342 214-70-10",
+      "email": "auto@mazperm.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО Dongfeng"
+      ],
+      "source_urls": [
+        "https://dong-fengrus.ru/najti-dilera"
+      ],
+      "notes": "Подтвердить прием грузовиков, оператора, координаты, актуальность контактов. ",
+      "operator_group": "autosistema-nestyukovo",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "dc-povolzhye-perm",
+      "name": "ДЦ Поволжье",
+      "region": "Пермский край",
+      "address": "Пермь, Причальная ул., 9",
+      "country": "Россия",
+      "phone": "8 800 775-08-88",
+      "email": "stoperm@dcbelarus.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО Dongfeng"
+      ],
+      "source_urls": [
+        "https://dong-fengrus.ru/najti-dilera"
+      ],
+      "notes": "Подтвердить прием грузовиков, оператора, координаты, актуальность контактов. ",
+      "operator_group": "dcbelarus",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "arsenal-penza",
+      "name": "Арсенал",
+      "region": "Пензенская область",
+      "address": "Пенза, ул. Строителей, 1А, к. 1",
+      "country": "Россия",
+      "phone": "+7 8412 509-681",
+      "email": "techcentr-arsenal@yandex.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО Dongfeng"
+      ],
+      "source_urls": [
+        "https://dong-fengrus.ru/najti-dilera"
+      ],
+      "notes": "Подтвердить прием грузовиков, оператора, координаты, актуальность контактов. ",
+      "operator_group": "arsenal-penza",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "transservice-topolevo",
+      "name": "Транссервис",
+      "region": "Хабаровский край",
+      "address": "с. Тополево, Прогрессивная ул., 15",
+      "country": "Россия",
+      "phone": "+7 4212 52-92-68",
+      "email": "sii@wstruck.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО Dongfeng"
+      ],
+      "source_urls": [
+        "https://dong-fengrus.ru/najti-dilera"
+      ],
+      "notes": "Подтвердить прием грузовиков, оператора, координаты, актуальность контактов. ",
+      "operator_group": "transservice-topolevo",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "hropal-nadezhda",
+      "name": "Хропаль-Авто — Надежда",
+      "region": "Ставропольский край",
+      "address": "с. Надежда, микрорайон 1, 4",
+      "country": "Россия",
+      "phone": "+7 8652 29-82-82",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО Dongfeng"
+      ],
+      "source_urls": [
+        "https://dong-fengrus.ru/najti-dilera"
+      ],
+      "notes": "Подтвердить прием грузовиков, оператора, координаты, актуальность контактов. ",
+      "operator_group": "hropal-auto",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "dc-samara-mira",
+      "name": "СТО ДЦ — Крутые Ключи",
+      "region": "Самарская область",
+      "address": "Самара, мкр. Крутые Ключи, ул. Мира, 11",
+      "country": "Россия",
+      "phone": "8 800 775-08-88",
+      "email": "stosamara@dcbelarus.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО Dongfeng"
+      ],
+      "source_urls": [
+        "https://dong-fengrus.ru/najti-dilera"
+      ],
+      "notes": "ИП Искакова и ООО Авторитет на одном адресе — одна запись. Подтвердить прием грузовиков, оператора, координаты, актуальность контактов. ",
+      "operator_group": "dcbelarus",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "dc-ufa-dema",
+      "name": "СТО ДЦ — Дёма",
+      "region": "Республика Башкортостан",
+      "address": "Уфа, мкр. Дёма, ул. Центральная, 59/3, стр. 1",
+      "country": "Россия",
+      "phone": "8 800 775-08-88",
+      "email": "stoufa@dcbelarus.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО Dongfeng"
+      ],
+      "source_urls": [
+        "https://dong-fengrus.ru/najti-dilera"
+      ],
+      "notes": "Подтвердить прием грузовиков, оператора, координаты, актуальность контактов. ",
+      "operator_group": "dcbelarus",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "git-service-ulyanovsk",
+      "name": "ГИТ Сервис",
+      "region": "Ульяновская область",
+      "address": "Ульяновск, Сельдинское шоссе, 12, пом. 3",
+      "country": "Россия",
+      "phone": "+7 8422 240-888",
+      "email": "mail@geo-s.net",
+      "hours": null,
+      "services": [
+        "ремонт и ТО Dongfeng"
+      ],
+      "source_urls": [
+        "https://dong-fengrus.ru/najti-dilera"
+      ],
+      "notes": "Подтвердить прием грузовиков, оператора, координаты, актуальность контактов. ",
+      "operator_group": "git-service-ulyanovsk",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "dc-yar-aviatorov",
+      "name": "ДЦ ЯР",
+      "region": "Ярославская область",
+      "address": "Ярославль, просп. Авиаторов, 153",
+      "country": "Россия",
+      "phone": "8 800 775-08-88",
+      "email": "info@dcbelarus.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО Dongfeng"
+      ],
+      "source_urls": [
+        "https://dong-fengrus.ru/najti-dilera"
+      ],
+      "notes": "Подтвердить прием грузовиков, оператора, координаты, актуальность контактов. ",
+      "operator_group": "dcbelarus",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "dayun-balakovo",
+      "name": "СТО Демидов",
+      "region": "Саратовская область",
+      "address": "Балаково, Саратовское шоссе, 116",
+      "country": "Россия",
+      "phone": "+7 927 144-44-27",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО Dayun"
+      ],
+      "source_urls": [
+        "https://dayuntruck.ru/karta-dilerov-i-sto/"
+      ],
+      "notes": "Подтвердить прием грузовиков, оператора, координаты, актуальность контактов. ",
+      "operator_group": "dayun-balakovo",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "rts-ekb",
+      "name": "РТС",
+      "region": "Свердловская область",
+      "address": "Екатеринбург, Промышленный проезд, 6",
+      "country": "Россия",
+      "phone": "+7 343 216-86-73",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО Dayun"
+      ],
+      "source_urls": [
+        "https://dayuntruck.ru/karta-dilerov-i-sto/"
+      ],
+      "notes": "Подтвердить прием грузовиков, оператора, координаты, актуальность контактов. ",
+      "operator_group": "rts-ekb",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "tselaya-fura-mamony",
+      "name": "Целая фура — Мамоны",
+      "region": "Иркутская область",
+      "address": "с. Мамоны, Центральная ул., 45",
+      "country": "Россия",
+      "phone": "+7 3812 91-33-01",
+      "email": "mail@bigdetails.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО Dayun"
+      ],
+      "source_urls": [
+        "https://dayuntruck.ru/karta-dilerov-i-sto/"
+      ],
+      "notes": "Общий телефон сети. Подтвердить прием грузовиков, оператора, координаты, актуальность контактов. ",
+      "operator_group": "tselaya-fura",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "gazmarket-kemerovo",
+      "name": "ГазМаркет",
+      "region": "Кемеровская область",
+      "address": "Кемерово, ул. Тухачевского, 48",
+      "country": "Россия",
+      "phone": "+7 3842 67-05-20",
+      "email": "gazmarket142@mail.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО Dayun"
+      ],
+      "source_urls": [
+        "https://dayuntruck.ru/karta-dilerov-i-sto/"
+      ],
+      "notes": "Подтвердить прием грузовиков, оператора, координаты, актуальность контактов. ",
+      "operator_group": "gazmarket-kemerovo",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "metan-garant-kazinka",
+      "name": "Метан гарант",
+      "region": "Липецкая область",
+      "address": "Грязинский район, с. Казинка, Дубовая ул., 3",
+      "country": "Россия",
+      "phone": "+7 919 160-88-99",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО Dayun"
+      ],
+      "source_urls": [
+        "https://dayuntruck.ru/karta-dilerov-i-sto/"
+      ],
+      "notes": "Подтвердить прием грузовиков, оператора, координаты, актуальность контактов. ",
+      "operator_group": "metan-garant-kazinka",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "tselaya-fura-omsk",
+      "name": "Целая фура — Омск",
+      "region": "Омская область",
+      "address": "Омск, ул. 10 лет Октября, 219",
+      "country": "Россия",
+      "phone": "+7 3812 91-33-01",
+      "email": "mail@bigdetails.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО Dayun"
+      ],
+      "source_urls": [
+        "https://dayuntruck.ru/karta-dilerov-i-sto/"
+      ],
+      "notes": "Подтвердить прием грузовиков, оператора, координаты, актуальность контактов. ",
+      "operator_group": "tselaya-fura",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "tselaya-fura-troitskoe",
+      "name": "Целая фура — Троицкое",
+      "region": "Омская область",
+      "address": "с. Троицкое, 1-я Луговая ул., 9А",
+      "country": "Россия",
+      "phone": "+7 3812 91-33-01",
+      "email": "mail@bigdetails.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО Dayun"
+      ],
+      "source_urls": [
+        "https://dayuntruck.ru/karta-dilerov-i-sto/"
+      ],
+      "notes": "Подтвердить прием грузовиков, оператора, координаты, актуальность контактов. ",
+      "operator_group": "tselaya-fura",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "sindikat-tomsk",
+      "name": "Синдикат Авто",
+      "region": "Томская область",
+      "address": "Томск, Мостовой пер., 1А",
+      "country": "Россия",
+      "phone": "+7 3822 33-19-11",
+      "email": "dir@sindikatavto.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО Dayun"
+      ],
+      "source_urls": [
+        "https://dayuntruck.ru/karta-dilerov-i-sto/"
+      ],
+      "notes": "Подтвердить прием грузовиков, оператора, координаты, актуальность контактов. ",
+      "operator_group": "sindikat-tomsk",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "tc-progress-chel",
+      "name": "ТЦ Прогресс",
+      "region": "Челябинская область",
+      "address": "Челябинск, Трактовая ул., 30",
+      "country": "Россия",
+      "phone": "+7 902 609-99-33",
+      "email": "kiv@truckural.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО Dayun"
+      ],
+      "source_urls": [
+        "https://dayuntruck.ru/karta-dilerov-i-sto/"
+      ],
+      "notes": "Подтвердить прием грузовиков, оператора, координаты, актуальность контактов. ",
+      "operator_group": "tc-progress-chel",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "dv-avtocenter-vladivostok",
+      "name": "ДВ Автоцентр",
+      "region": "Приморский край",
+      "address": "Владивосток, Выселковая ул., 30",
+      "country": "Россия",
+      "phone": "+7 423 246-41-44",
+      "email": null,
+      "hours": null,
+      "services": [
+        "сервис Foton"
+      ],
+      "source_urls": [
+        "https://cf-computing.aumantruck.cc/aftersalesnetwork",
+        "https://galaxy-trucks.ru/dealers/map/"
+      ],
+      "notes": "Подтвердить прием грузовиков, оператора, координаты, актуальность контактов. ",
+      "operator_group": "dv-avtocenter-vladivostok",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "ttm-ryazan-197",
+      "name": "ТТМ Центр Рязань",
+      "region": "Рязанская область",
+      "address": "Рязань, Окружная дорога, 197-й км, стр. 3",
+      "country": "Россия",
+      "phone": "+7 4912 24-10-51",
+      "email": "info@foton-ryazan.ru",
+      "hours": null,
+      "services": [
+        "сервис Foton"
+      ],
+      "source_urls": [
+        "https://cf-computing.aumantruck.cc/aftersalesnetwork",
+        "https://galaxy-trucks.ru/dealers/map/"
+      ],
+      "notes": "Контакты дополнительно из российского каталога Foton. Подтвердить прием грузовиков, оператора, координаты, актуальность контактов. ",
+      "operator_group": "ttm-center",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "alena-arena-rassvet",
+      "name": "Арена Трак / Alena Trak",
+      "region": "Ростовская область",
+      "address": "Аксайский район, пос. Рассвет, территория Арена Трак, здание 1/1-1/2",
+      "country": "Россия",
+      "phone": "+7 863 210-33-32",
+      "email": null,
+      "hours": null,
+      "services": [
+        "сервис Foton"
+      ],
+      "source_urls": [
+        "https://cf-computing.aumantruck.cc/aftersalesnetwork",
+        "https://galaxy-trucks.ru/dealers/map/"
+      ],
+      "notes": "Контакт из российского каталога Foton; одна площадка под двумя названиями. Подтвердить прием грузовиков, оператора, координаты, актуальность контактов. ",
+      "operator_group": "arena-truck",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "hit-motors-perm",
+      "name": "ХИТ Моторс",
+      "region": "Пермский край",
+      "address": "Пермь, Промышленная ул., 147А",
+      "country": "Россия",
+      "phone": "+7 342 294-57-44",
+      "email": null,
+      "hours": null,
+      "services": [
+        "сервис Foton"
+      ],
+      "source_urls": [
+        "https://cf-computing.aumantruck.cc/aftersalesnetwork",
+        "https://galaxy-trucks.ru/dealers/map/"
+      ],
+      "notes": "Контакт также в российском каталоге Foton. Подтвердить прием грузовиков, оператора, координаты, актуальность контактов. ",
+      "operator_group": "hit-motors-perm",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "comtranscenter-nn",
+      "name": "Комтрансцентр",
+      "region": "Нижегородская область",
+      "address": "Нижний Новгород, Электровозная ул., 7А",
+      "country": "Россия",
+      "phone": "+7 831 423-07-07",
+      "email": "foton-comtrans@mail.ru",
+      "hours": null,
+      "services": [
+        "сервис Foton"
+      ],
+      "source_urls": [
+        "https://cf-computing.aumantruck.cc/aftersalesnetwork",
+        "https://galaxy-trucks.ru/dealers/map/"
+      ],
+      "notes": "Контакт также в российском каталоге Foton. Подтвердить прием грузовиков, оператора, координаты, актуальность контактов. ",
+      "operator_group": "comtranscenter-nn",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "ttm-bryansk",
+      "name": "ТТМ Центр — Брянск",
+      "region": "Брянская область",
+      "address": "Брянск, Московский проезд, 1А",
+      "country": "Россия",
+      "phone": "+7 4832 44-50-64",
+      "email": "info@cttm32.ru",
+      "hours": null,
+      "services": [
+        "сервис Foton"
+      ],
+      "source_urls": [
+        "https://cf-computing.aumantruck.cc/aftersalesnetwork",
+        "https://galaxy-trucks.ru/dealers/map/"
+      ],
+      "notes": "Контакт также в российском каталоге Foton. Подтвердить прием грузовиков, оператора, координаты, актуальность контактов. ",
+      "operator_group": "ttm-center",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vologdatrakservice",
+      "name": "ВологдаТракСервис",
+      "region": "Вологодская область",
+      "address": "Вологда, Окружное шоссе, 9Б",
+      "country": "Россия",
+      "phone": "8 800 250-53-51",
+      "email": "inbox@vts35.ru",
+      "hours": null,
+      "services": [
+        "сервис Foton"
+      ],
+      "source_urls": [
+        "https://cf-computing.aumantruck.cc/aftersalesnetwork",
+        "https://galaxy-trucks.ru/dealers/map/"
+      ],
+      "notes": "Контакт также в российском каталоге Foton. Подтвердить прием грузовиков, оператора, координаты, актуальность контактов. ",
+      "operator_group": "vologdatrakservice",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "siberian-transport-house",
+      "name": "Сибирский транспортный дом",
+      "region": "Новосибирская область",
+      "address": "Новосибирск, 1-е Мочищенское шоссе, 19А",
+      "country": "Россия",
+      "phone": "+7 383 309-08-08",
+      "email": "stdinfo@stdnsk.ru",
+      "hours": null,
+      "services": [
+        "сервис Foton"
+      ],
+      "source_urls": [
+        "https://cf-computing.aumantruck.cc/aftersalesnetwork",
+        "https://galaxy-trucks.ru/dealers/map/"
+      ],
+      "notes": "Контакт также в российском каталоге Foton. Подтвердить прием грузовиков, оператора, координаты, актуальность контактов. ",
+      "operator_group": "siberian-transport-house",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "sias-bulatnikovo",
+      "name": "СИАС-Тракс",
+      "region": "Московская область",
+      "address": "с. Булатниково, Симферопольское шоссе, 3",
+      "country": "Россия",
+      "phone": "8 800 775-40-71",
+      "email": "foton@sovinter.ru",
+      "hours": null,
+      "services": [
+        "кандидат дилерской сети Foton, ремонтный профиль уточнить"
+      ],
+      "source_urls": [
+        "https://galaxy-trucks.ru/dealers/map/"
+      ],
+      "notes": "Подтвердить прием грузовиков, оператора, координаты, актуальность контактов. Дилерская карточка сама по себе не подтверждает отдельную ремонтную станцию.",
+      "operator_group": "sias-bulatnikovo",
+      "evidence": "dealer_directory_service_unconfirmed",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "gas36-dzerzhinsk3v",
+      "name": "ГрузАвто Сервис-36 — Автозаводское 3В",
+      "region": "Нижегородская область",
+      "address": "Дзержинск, Автозаводское шоссе, 3В",
+      "country": "Россия",
+      "phone": "+7 831 335-06-41",
+      "email": null,
+      "hours": null,
+      "services": [
+        "кандидат дилерской сети Foton, ремонтный профиль уточнить"
+      ],
+      "source_urls": [
+        "https://galaxy-trucks.ru/dealers/map/"
+      ],
+      "notes": "Подтвердить прием грузовиков, оператора, координаты, актуальность контактов. Дилерская карточка сама по себе не подтверждает отдельную ремонтную станцию.",
+      "operator_group": "gas36",
+      "evidence": "dealer_directory_service_unconfirmed",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "gas36-dzerzhinsk51a",
+      "name": "ГрузАвто Сервис-36 — Автозаводское 51А",
+      "region": "Нижегородская область",
+      "address": "Дзержинск, Автозаводское шоссе, 51А",
+      "country": "Россия",
+      "phone": "+7 831 335-06-41",
+      "email": null,
+      "hours": null,
+      "services": [
+        "кандидат дилерской сети Foton, ремонтный профиль уточнить"
+      ],
+      "source_urls": [
+        "https://galaxy-trucks.ru/dealers/map/"
+      ],
+      "notes": "Подтвердить прием грузовиков, оператора, координаты, актуальность контактов. Дилерская карточка сама по себе не подтверждает отдельную ремонтную станцию.",
+      "operator_group": "gas36",
+      "evidence": "dealer_directory_service_unconfirmed",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "gas36-ramon",
+      "name": "ГрузАвто Сервис-36 — Рамонь",
+      "region": "Воронежская область",
+      "address": "Рамонский район, Айдаровское с.п., 7-я Промышленная зона, 7А",
+      "country": "Россия",
+      "phone": "8 800 222-09-33",
+      "email": "kai@gas36.com",
+      "hours": null,
+      "services": [
+        "кандидат дилерской сети Foton, ремонтный профиль уточнить"
+      ],
+      "source_urls": [
+        "https://galaxy-trucks.ru/dealers/map/"
+      ],
+      "notes": "Подтвердить прием грузовиков, оператора, координаты, актуальность контактов. Дилерская карточка сама по себе не подтверждает отдельную ремонтную станцию.",
+      "operator_group": "gas36",
+      "evidence": "dealer_directory_service_unconfirmed",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "voronezh-truck-service",
+      "name": "Воронеж Трак Сервис",
+      "region": "Воронежская область",
+      "address": "Рамонский район, Айдаровское с.п., 5-я Промышленная зона, 9/1",
+      "country": "Россия",
+      "phone": "+7 980 534-52-63",
+      "email": "vrntruck.service@gmail.com",
+      "hours": null,
+      "services": [
+        "кандидат дилерской сети Foton, ремонтный профиль уточнить"
+      ],
+      "source_urls": [
+        "https://galaxy-trucks.ru/dealers/map/"
+      ],
+      "notes": "Подтвердить прием грузовиков, оператора, координаты, актуальность контактов. Дилерская карточка сама по себе не подтверждает отдельную ремонтную станцию.",
+      "operator_group": "voronezh-truck-service",
+      "evidence": "dealer_directory_service_unconfirmed",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "mbv-vologda-service",
+      "name": "МБВ Сервис",
+      "region": "Вологодская область",
+      "address": "Вологда, Старое шоссе, 5А",
+      "country": "Россия",
+      "phone": "+7 8172 70-00-08",
+      "email": null,
+      "hours": null,
+      "services": [
+        "кандидат дилерской сети Foton, ремонтный профиль уточнить"
+      ],
+      "source_urls": [
+        "https://galaxy-trucks.ru/dealers/map/"
+      ],
+      "notes": "Именно сервисная площадка, адрес отдела продаж отдельно не учитывается. Подтвердить прием грузовиков, оператора, координаты, актуальность контактов. Дилерская карточка сама по себе не подтверждает отдельную ремонтную станцию.",
+      "operator_group": "mbv",
+      "evidence": "dealer_directory_service_unconfirmed",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "trucktransservice-nn",
+      "name": "ТракТрансСервис",
+      "region": "Нижегородская область",
+      "address": "Нижний Новгород, Кузбасская ул., 1",
+      "country": "Россия",
+      "phone": "+7 831 274-85-85",
+      "email": "info@ttsnn.ru",
+      "hours": null,
+      "services": [
+        "кандидат дилерской сети Foton, ремонтный профиль уточнить"
+      ],
+      "source_urls": [
+        "https://galaxy-trucks.ru/dealers/map/"
+      ],
+      "notes": "Подтвердить прием грузовиков, оператора, координаты, актуальность контактов. Дилерская карточка сама по себе не подтверждает отдельную ремонтную станцию.",
+      "operator_group": "trucktransservice-nn",
+      "evidence": "dealer_directory_service_unconfirmed",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "tachographtruckservice-volgograd",
+      "name": "ТахографТракСервис",
+      "region": "Волгоградская область",
+      "address": "Волгоград, ул. Костюченко, 4",
+      "country": "Россия",
+      "phone": "8 800 444-71-34",
+      "email": "volvo@tksm.ru",
+      "hours": null,
+      "services": [
+        "кандидат дилерской сети Foton, ремонтный профиль уточнить"
+      ],
+      "source_urls": [
+        "https://galaxy-trucks.ru/dealers/map/"
+      ],
+      "notes": "Уточнить объем грузового ремонта. Подтвердить прием грузовиков, оператора, координаты, актуальность контактов. Дилерская карточка сама по себе не подтверждает отдельную ремонтную станцию.",
+      "operator_group": "tachographtruckservice-volgograd",
+      "evidence": "dealer_directory_service_unconfirmed",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "ttm-volgograd",
+      "name": "ТТМ Центр — Волгоград",
+      "region": "Волгоградская область",
+      "address": "Волгоград, Историческая ул., 191Б",
+      "country": "Россия",
+      "phone": "+7 8442 613-615",
+      "email": "ttm-v@yandex.ru",
+      "hours": null,
+      "services": [
+        "сервис Foton"
+      ],
+      "source_urls": [
+        "https://cf-computing.aumantruck.cc/aftersalesnetwork",
+        "https://galaxy-trucks.ru/dealers/map/"
+      ],
+      "notes": "Контакт из российского каталога Foton. Подтвердить прием грузовиков, оператора, координаты, актуальность контактов. ",
+      "operator_group": "ttm-center",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "service-avto-trucks-aksay",
+      "name": "Сервис Авто Тракс",
+      "region": "Ростовская область",
+      "address": "Аксайский район, Грушевское с.п., Марсово поле, 4с",
+      "country": "Россия",
+      "phone": "+7 904 505-10-10",
+      "email": "tat020@mail.ru",
+      "hours": null,
+      "services": [
+        "кандидат дилерской сети Foton, ремонтный профиль уточнить"
+      ],
+      "source_urls": [
+        "https://galaxy-trucks.ru/dealers/map/"
+      ],
+      "notes": "Подтвердить прием грузовиков, оператора, координаты, актуальность контактов. Дилерская карточка сама по себе не подтверждает отдельную ремонтную станцию.",
+      "operator_group": "service-avto-trucks-aksay",
+      "evidence": "dealer_directory_service_unconfirmed",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "arena-rostov-dovatora",
+      "name": "Арена Трак — Доватора",
+      "region": "Ростовская область",
+      "address": "Ростов-на-Дону, ул. Доватора, 277",
+      "country": "Россия",
+      "phone": "+7 863 210-33-32",
+      "email": null,
+      "hours": null,
+      "services": [
+        "кандидат дилерской сети Foton, ремонтный профиль уточнить"
+      ],
+      "source_urls": [
+        "https://galaxy-trucks.ru/dealers/map/"
+      ],
+      "notes": "Подтвердить прием грузовиков, оператора, координаты, актуальность контактов. Дилерская карточка сама по себе не подтверждает отдельную ремонтную станцию.",
+      "operator_group": "arena-truck",
+      "evidence": "dealer_directory_service_unconfirmed",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "uraltransclimate-chel",
+      "name": "УралТрансКлимат",
+      "region": "Челябинская область",
+      "address": "Челябинск, Троицкий тракт, 3А/1",
+      "country": "Россия",
+      "phone": "8 800 200-64-47",
+      "email": "fotonchel@mail.ru",
+      "hours": null,
+      "services": [
+        "сервис Foton"
+      ],
+      "source_urls": [
+        "https://cf-computing.aumantruck.cc/aftersalesnetwork",
+        "https://galaxy-trucks.ru/dealers/map/"
+      ],
+      "notes": "Контакт из российского каталога Foton; адрес глобального каталога 3А. Подтвердить прием грузовиков, оператора, координаты, актуальность контактов. ",
+      "operator_group": "uraltransclimate-chel",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "baikalit-vdovina",
+      "name": "Байкалит-СКЦ",
+      "region": "Иркутская область",
+      "address": "заимка Вдовина, Дорожная ул., 96/1",
+      "country": "Россия",
+      "phone": "+7 3952 718-609",
+      "email": "dvfoton@gmail.com",
+      "hours": null,
+      "services": [
+        "кандидат дилерской сети Foton, ремонтный профиль уточнить"
+      ],
+      "source_urls": [
+        "https://galaxy-trucks.ru/dealers/map/"
+      ],
+      "notes": "Подтвердить прием грузовиков, оператора, координаты, актуальность контактов. Дилерская карточка сама по себе не подтверждает отдельную ремонтную станцию.",
+      "operator_group": "baikalit-vdovina",
+      "evidence": "dealer_directory_service_unconfirmed",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "komavtobaikal-mamony",
+      "name": "КомАвтоБайкал",
+      "region": "Иркутская область",
+      "address": "пос. Мамоны, Центральная ул., 37",
+      "country": "Россия",
+      "phone": "+7 3952 500-656",
+      "email": null,
+      "hours": null,
+      "services": [
+        "кандидат дилерской сети Foton, ремонтный профиль уточнить"
+      ],
+      "source_urls": [
+        "https://galaxy-trucks.ru/dealers/map/"
+      ],
+      "notes": "Подтвердить прием грузовиков, оператора, координаты, актуальность контактов. Дилерская карточка сама по себе не подтверждает отдельную ремонтную станцию.",
+      "operator_group": "komavtobaikal-mamony",
+      "evidence": "dealer_directory_service_unconfirmed",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "trial-m-solontsy",
+      "name": "Триал-М",
+      "region": "Красноярский край",
+      "address": "пос. Солонцы, Магистральный квартал, 11/1",
+      "country": "Россия",
+      "phone": "+7 391 242-42-69",
+      "email": "Trialauto3@iveco24.ru",
+      "hours": null,
+      "services": [
+        "кандидат дилерской сети Foton, ремонтный профиль уточнить"
+      ],
+      "source_urls": [
+        "https://galaxy-trucks.ru/dealers/map/"
+      ],
+      "notes": "Подтвердить прием грузовиков, оператора, координаты, актуальность контактов. Дилерская карточка сама по себе не подтверждает отдельную ремонтную станцию.",
+      "operator_group": "trial-m-solontsy",
+      "evidence": "dealer_directory_service_unconfirmed",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "tomavto-kuzovlevsky",
+      "name": "ТК ТомАвто",
+      "region": "Томская область",
+      "address": "Томск, Кузовлевский тракт, 4Г",
+      "country": "Россия",
+      "phone": "+7 3822 58-62-42",
+      "email": "tk-avtobus@mail.ru",
+      "hours": null,
+      "services": [
+        "кандидат дилерской сети Foton, ремонтный профиль уточнить"
+      ],
+      "source_urls": [
+        "https://galaxy-trucks.ru/dealers/map/"
+      ],
+      "notes": "Подтвердить прием грузовиков, оператора, координаты, актуальность контактов. Дилерская карточка сама по себе не подтверждает отдельную ремонтную станцию.",
+      "operator_group": "tomavto-kuzovlevsky",
+      "evidence": "dealer_directory_service_unconfirmed",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "truckmechanika-nadezhda",
+      "name": "Тракмеханика",
+      "region": "Ставропольский край",
+      "address": "с. Надежда, ул. Победы, 5",
+      "country": "Россия",
+      "phone": "8 800 222-21-57",
+      "email": "TrackMehanika@yandex.ru",
+      "hours": null,
+      "services": [
+        "кандидат дилерской сети Foton, ремонтный профиль уточнить"
+      ],
+      "source_urls": [
+        "https://galaxy-trucks.ru/dealers/map/"
+      ],
+      "notes": "Подтвердить прием грузовиков, оператора, координаты, актуальность контактов. Дилерская карточка сама по себе не подтверждает отдельную ремонтную станцию.",
+      "operator_group": "truckmechanika-nadezhda",
+      "evidence": "dealer_directory_service_unconfirmed",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "basdv-vladivostok",
+      "name": "Бас-ДВ — Владивосток",
+      "region": "Приморский край",
+      "address": "Владивосток, Бородинская ул., 61",
+      "country": "Россия",
+      "phone": "+7 423 268-80-40",
+      "email": "marketing@busdv.ru",
+      "hours": null,
+      "services": [
+        "кандидат дилерской сети Foton, ремонтный профиль уточнить"
+      ],
+      "source_urls": [
+        "https://galaxy-trucks.ru/dealers/map/"
+      ],
+      "notes": "Подтвердить прием грузовиков, оператора, координаты, актуальность контактов. Дилерская карточка сама по себе не подтверждает отдельную ремонтную станцию.",
+      "operator_group": "bas-dv",
+      "evidence": "dealer_directory_service_unconfirmed",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "basdv-khabarovsk",
+      "name": "Бас-ДВ — Хабаровск",
+      "region": "Хабаровский край",
+      "address": "Хабаровск, ул. Карла Маркса, 176",
+      "country": "Россия",
+      "phone": "+7 4212 40-29-49",
+      "email": "marketing@busdv.ru",
+      "hours": null,
+      "services": [
+        "кандидат дилерской сети Foton, ремонтный профиль уточнить"
+      ],
+      "source_urls": [
+        "https://galaxy-trucks.ru/dealers/map/"
+      ],
+      "notes": "Подтвердить прием грузовиков, оператора, координаты, актуальность контактов. Дилерская карточка сама по себе не подтверждает отдельную ремонтную станцию.",
+      "operator_group": "bas-dv",
+      "evidence": "dealer_directory_service_unconfirmed",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    }
+  ],
+  "excluded_exact_matches": [],
+  "review_notes": [
+    "Nine previous priority/network batches compared for exact matches; fuzzy dedup and all regional batches still pending.",
+    "Skipped Alex Truck/Truck Relax Kemerovo, Major Pavlovskaya Sloboda, GreenAuto Omsk, 1km Druz hino, Avtomet Ryazan, Nara Avto Trans, Tvt Avtomobilnaya 8, B olshegruz 13D, GTS Gorelovo, FNGROUP Shushary, T irpaneftrans, Vostok, and other known addresses. Enrich existing records rather than count as new.",
+    "Existing Truck78 info@truck78.ru and TIS Group sto@tis-remont.ru published on official sites https://truck78.ru/ and https://tis-remont.ru/; enrichment candidates, not new sites.",
+    "Potentially overlapping Tomsk Mostovoy 1A vs 5, Nadezhda different locations and operator aliases: review before publication. Dealer-only Foton entries held for further workshop confirmation."
+  ]
+}
