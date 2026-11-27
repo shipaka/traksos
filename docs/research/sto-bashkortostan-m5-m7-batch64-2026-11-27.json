@@ -1,0 +1,353 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Staging only; do not publish",
+  "deduplication": "Targeted name, address fragments and phone patterns in audit B/C (1–31) and batches 32–49,51–63. No exact match found for seven records in this pass. Full normalized cross-batch audit pending.",
+  "records": [
+    {
+      "id": "b64-geokon",
+      "name": "Геокон",
+      "region": "Республика Башкортостан",
+      "address": "Иглинский район, М5, 1490-й км + 500 м",
+      "country": "Россия",
+      "phone": "+7 917 797-64-02",
+      "additional_phones": [
+        "+7 960 399-22-22"
+      ],
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт грузовиков и полуприцепов",
+        "оси SAF, BPW, ROR",
+        "развал-схождение",
+        "тормоза",
+        "сварка"
+      ],
+      "source_urls": [
+        "https://www.geokonufa.ru/gruzovoy-avtoservis"
+      ],
+      "road": "М5",
+      "notes": "Сайт оператора подтверждает профиль; точность въезда и график уточнить.",
+      "evidence": "business_first_party_website",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": [],
+      "profile_verification_required": false
+    },
+    {
+      "id": "b64-ufa-central",
+      "name": "Грузовой автосервис — Центральная",
+      "region": "Республика Башкортостан",
+      "address": "Уфа, ул. Центральная, 53",
+      "country": "Россия",
+      "phone": "+7 917 464-26-94",
+      "additional_phones": [],
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой ремонт",
+        "ремонт прицепов",
+        "сварка"
+      ],
+      "source_urls": [
+        "https://ufa.auto2.info/ufa/gruzovoy-avtoservis-422083/"
+      ],
+      "road": "М5",
+      "notes": "Телефон мастера опубликован в деловой карточке; название оператора и актуальность уточнить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": [],
+      "profile_verification_required": true
+    },
+    {
+      "id": "b64-dyurtyuli-sedova",
+      "name": "Грузовой автосервис — Седова",
+      "region": "Республика Башкортостан",
+      "address": "Дюртюли, ул. Седова, 26/2",
+      "country": "Россия",
+      "phone": "+7 917 734-73-47",
+      "additional_phones": [],
+      "email": null,
+      "hours": "ежедневно 09:00–19:00",
+      "services": [
+        "грузовой ремонт"
+      ],
+      "source_urls": [
+        "https://ufa.spravker.ru/gorod-diurtiuli/avtoservisy-avtotehcentry/"
+      ],
+      "road": "М7/М12",
+      "notes": "Соседний Автоцентр 26/1 имеет иной телефон; не считать отдельной грузовой СТО без подтверждения.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": [],
+      "profile_verification_required": true
+    },
+    {
+      "id": "b64-neftekamsk-kst",
+      "name": "КамаСпецТранс+",
+      "region": "Республика Башкортостан",
+      "address": "Нефтекамск, ул. Магистральная, 17Д",
+      "country": "Россия",
+      "phone": "+7 917 770-79-20",
+      "additional_phones": [
+        "+7 917 352-71-27",
+        "+7 34783 2-61-78"
+      ],
+      "email": null,
+      "hours": "Пн–Пт 08:00–17:00",
+      "services": [
+        "ремонт грузовых автомобилей (категория справочника)"
+      ],
+      "source_urls": [
+        "https://neftekamsk.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "road": "подъезд к М7",
+      "notes": "Уточнить прием сторонних тяжелых тягачей.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": [],
+      "profile_verification_required": true
+    },
+    {
+      "id": "b64-oktyabrsky-hydro",
+      "name": "Гидроремсервис",
+      "region": "Республика Башкортостан",
+      "address": "Октябрьский, ул. Северная, 38",
+      "country": "Россия",
+      "phone": "+7 927 086-28-60",
+      "additional_phones": [],
+      "email": null,
+      "hours": "Пн–Пт 09:00–18:00; Сб 09:00–17:00",
+      "services": [
+        "ремонт коммерческого транспорта (категория справочника)"
+      ],
+      "source_urls": [
+        "https://ufa.spravker.ru/gorod-oktiabrskii/remont-gruzovykh-avtomobilei/"
+      ],
+      "road": "М5",
+      "notes": "Конкретные работы и прием грузовиков подтвердить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": [],
+      "profile_verification_required": true
+    },
+    {
+      "id": "b64-oktyabrsky-perekrestok",
+      "name": "Перекресток Плюс",
+      "region": "Республика Башкортостан",
+      "address": "Октябрьский, ул. Космонавтов, 1Г",
+      "country": "Россия",
+      "phone": "+7 927 339-31-93",
+      "additional_phones": [
+        "+7 927 639-57-92"
+      ],
+      "email": null,
+      "hours": "Пн–Пт 09:00–19:00; Сб–Вс 10:00–18:00",
+      "services": [
+        "грузовой шиномонтаж",
+        "сварка",
+        "развал-схождение"
+      ],
+      "source_urls": [
+        "https://ufa.spravker.ru/gorod-oktiabrskii/remont-gruzovykh-avtomobilei/",
+        "https://oktyabrsky.big-book-avto.ru/avtoservisy/"
+      ],
+      "road": "М5",
+      "notes": "Габариты и доступные грузовые работы уточнить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "specialist_mixed",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": [],
+      "profile_verification_required": true
+    },
+    {
+      "id": "b64-tuimazy-remtech",
+      "name": "РемТехСервис",
+      "region": "Республика Башкортостан",
+      "address": "Туймазы, ул. Гафурова, 40, стр. 4",
+      "country": "Россия",
+      "phone": "+7 34782 6-54-44",
+      "additional_phones": [
+        "+7 937 343-73-77"
+      ],
+      "email": null,
+      "hours": "Пн–Пт 08:00–18:00; Сб 08:30–16:00",
+      "services": [
+        "ремонт грузовых автомобилей",
+        "ремонт спецтехники",
+        "кузовные работы"
+      ],
+      "source_urls": [
+        "https://urbanplaces.su/ru_respublika-bashkortostan/tujmazinskij-rajon-tujmazyi/card-1744294-remtehservis",
+        "https://tuimazy.spravker.ru/remont-pritsepov/"
+      ],
+      "road": "М5",
+      "notes": "Также карточка Дорагроснаб по тому же адресу; не добавлять отдельно. Основное наименование в источнике магазин запчастей; наличие действующего ремонтного цеха подтвердить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": [],
+      "profile_verification_required": true
+    }
+  ],
+  "review_only": [
+    {
+      "name": "Атлант",
+      "address": "Нефтекамск, Заводская, 8А",
+      "phone": "+7 987 144-51-46",
+      "source_urls": [
+        "https://neftekamsk.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "reason": "Only directory category; exact operator and duplicate check not completed."
+    },
+    {
+      "name": "Автокомплекс Восточный",
+      "address": "Нефтекамск, Уфимская улица",
+      "phone": "+7 917 444-03-03",
+      "source_urls": [
+        "https://neftekamsk.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "reason": "No building number; truck profile to verify."
+    },
+    {
+      "name": "Прометей Авто",
+      "address": "Октябрьский, Кувыкина, 46/14",
+      "phone": "+7 927 318-24-44",
+      "source_urls": [
+        "https://ufa.spravker.ru/gorod-oktiabrskii/remont-gruzovykh-avtomobilei/"
+      ],
+      "reason": "Truck category conflicts with passenger-focused advertised work; verify."
+    },
+    {
+      "name": "Ремзона Уфа",
+      "source_urls": [
+        "https://www.remzonaufa.ru/"
+      ],
+      "reason": "Source returned 502, search snippets mention existing ATS address and M5; do not infer another service."
+    },
+    {
+      "name": "Гараж-М5",
+      "address": "Татарстан, Бавлинский район, М5, 1271-й км",
+      "phone": "+7 919 152-50-20",
+      "source_urls": [
+        "https://oktyabrsky.big-book-avto.ru/avtoservisy/"
+      ],
+      "reason": "Outside selected region; cross-batch check for Tatarstan pending."
+    }
+  ],
+  "existing_record_reviews": [
+    {
+      "name": "Автоснаб",
+      "batch": 9,
+      "source_urls": [
+        "https://truck-ufa.ru/kontakty"
+      ],
+      "reason": "Existing contact confirmed in source."
+    },
+    {
+      "name": "Трансмаркет",
+      "batch": 9,
+      "source_urls": [
+        "https://tm-autoservice.ru/"
+      ],
+      "reason": "Existing contact confirmed in source."
+    },
+    {
+      "name": "АТС",
+      "batch": 9,
+      "source_urls": [
+        "https://atsrb.ru/"
+      ],
+      "reason": "Existing contact confirmed in source."
+    },
+    {
+      "name": "Евродеталь-Сервис",
+      "batch": 9,
+      "source_urls": [
+        "https://ufatruck.ru/"
+      ],
+      "reason": "Two existing branches, do not count again."
+    }
+  ]
+}
