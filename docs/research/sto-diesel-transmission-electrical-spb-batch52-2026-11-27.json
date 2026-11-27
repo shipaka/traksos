@@ -1,0 +1,233 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Staging only; do not publish",
+  "deduplication": "Targeted name, domain and address search in batch50 indexes B/C and records 32–49; compared with batch51 subject and known names. No matching new record identified. Full normalized-address/phone/legal-operator review pending.",
+  "records": [
+    {
+      "id": "b52-comtran-fuchika",
+      "name": "КОМТРАН",
+      "region": "Санкт-Петербург",
+      "address": "Санкт-Петербург, ул. Фучика, 8",
+      "country": "Россия",
+      "phone": "+7 812 660-59-88",
+      "email": "comtran@bk.ru",
+      "hours": "ежедневно 08:00–20:00",
+      "services": [
+        "ремонт ТНВД",
+        "ремонт дизельных форсунок грузовой техники"
+      ],
+      "source_urls": [
+        "https://comtran.ru/contact.html",
+        "https://comtran.ru/remont-tnvd.html"
+      ],
+      "notes": "Основной контакт указан в подвале сайта. Прием целого тягача уточнить.",
+      "evidence": "business_first_party_website",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "operator_key": "comtran",
+      "possible_matches": []
+    },
+    {
+      "id": "b52-sp-transmission",
+      "name": "СП Трансмишн",
+      "region": "Санкт-Петербург",
+      "address": "Санкт-Петербург, Южное шоссе, 37, корп. 1Б",
+      "country": "Россия",
+      "phone": "+7 921 961-88-48",
+      "email": "akpp78@mail.ru",
+      "hours": null,
+      "services": [
+        "ремонт АКПП грузовых автомобилей",
+        "ремонт трансмиссий спецтехники"
+      ],
+      "source_urls": [
+        "https://spectransmission.ru/"
+      ],
+      "notes": "Дополнительный телефон +7 812 401-40-10; возможность приема автомобиля целиком уточнить.",
+      "evidence": "business_first_party_website",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "operator_key": "sp-transmission",
+      "possible_matches": []
+    },
+    {
+      "id": "b52-starter-mitrofanevskoe",
+      "name": "Стартеры и Генераторы — Митрофаньевское",
+      "region": "Санкт-Петербург",
+      "address": "Санкт-Петербург, Митрофаньевское шоссе, 5Е",
+      "country": "Россия",
+      "phone": "+7 812 309-10-07",
+      "email": null,
+      "hours": "ежедневно 10:00–20:00",
+      "services": [
+        "ремонт стартеров грузовых автомобилей",
+        "ремонт генераторов грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://starter-remont.ru/"
+      ],
+      "notes": "Агрегатная мастерская. Второй филиал на Лужской; на сайте есть старые акции, актуальность работы уточнить.",
+      "evidence": "business_first_party_website",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "operator_key": "starter-remont",
+      "possible_matches": []
+    },
+    {
+      "id": "b52-starter-luzhskaya",
+      "name": "Стартеры и Генераторы — Лужская",
+      "region": "Санкт-Петербург",
+      "address": "Санкт-Петербург, ул. Лужская, 3",
+      "country": "Россия",
+      "phone": "+7 812 242-16-77",
+      "email": null,
+      "hours": "ежедневно 10:00–20:00",
+      "services": [
+        "ремонт стартеров грузовых автомобилей",
+        "ремонт генераторов грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://starter-remont.ru/"
+      ],
+      "notes": "Отдельный филиал. Прием целого грузовика не подтвержден; актуальность работы уточнить.",
+      "evidence": "business_first_party_website",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "operator_key": "starter-remont",
+      "possible_matches": []
+    }
+  ],
+  "existing_matches": [
+    {
+      "name": "Карго Техник",
+      "batch": 32,
+      "source": "https://cargotechnic.ru/",
+      "services": [
+        "КПП",
+        "редукторы",
+        "ремонт грузовиков и полуприцепов"
+      ]
+    },
+    {
+      "name": "Автоспецсервис — Дизель Центр",
+      "batch": 40,
+      "source": "https://diesel-center.ru/",
+      "services": [
+        "топливная аппаратура",
+        "Common Rail",
+        "PLD"
+      ]
+    },
+    {
+      "name": "КТСервис",
+      "batch": 41,
+      "source": "https://ktrem.ru/contacts",
+      "services": [
+        "турбины",
+        "карданные валы"
+      ]
+    },
+    {
+      "name": "MasterTurbo",
+      "batch": 40,
+      "source": "https://www.turbolider.ru/trucks/",
+      "services": [
+        "грузовые турбокомпрессоры"
+      ]
+    }
+  ],
+  "review_only": [
+    {
+      "name": "Турбо-Сервис",
+      "address": "Ленинградская область, Фёдоровское, Почтовая ул., 17, пом. 1",
+      "phone": "+7 901 315-41-41",
+      "email": "47turboservice@gmail.com",
+      "services": [
+        "ремонт турбин грузовиков",
+        "ремонт осей полуприцепов"
+      ],
+      "source_urls": [
+        "https://turboservicespb.ru/"
+      ],
+      "reason": "Совпадение основного адреса с Ремзона47 (batch02), отдельность площадки уточнить."
+    },
+    {
+      "name": "Турбо-Сервис — АМВ-Сервис",
+      "address": "Санкт-Петербург, ул. Маршала Казакова, 35Р",
+      "phone": "+7 901 315-41-41",
+      "source_urls": [
+        "https://turboservicespb.ru/"
+      ],
+      "reason": "Прием по предварительной записи; производство указано в Фёдоровском, роль точки уточнить."
+    },
+    {
+      "name": "КОМТРАН — Предпортовая",
+      "address": "Санкт-Петербург, ул. Предпортовая, 5",
+      "phone": "+7 812 660-59-88",
+      "source_urls": [
+        "https://comtran.ru/contact.html"
+      ],
+      "reason": "На странице есть второй адрес с общим телефоном, но отдельный действующий ремонтный участок не подтвержден."
+    },
+    {
+      "name": "Форсунка24.рф",
+      "address": "Санкт-Петербург, ул. Автомобильная, 8",
+      "phone": "+7 812 748-18-08",
+      "email": "amdiesel78@gmail.com",
+      "services": [
+        "ремонт насос-форсунок",
+        "Common Rail",
+        "PLD"
+      ],
+      "source_urls": [
+        "https://xn--24-6kc3bofoisg.xn--p1ai/remont-dizelnyh-forsunok-Detroit-Diesel/"
+      ],
+      "reason": "Адрес совпадает с СПб РемТранс (batch35); рядом АТП мойка (batch44, лит. В). Уточнить отдельный бокс и вход."
+    }
+  ]
+}
