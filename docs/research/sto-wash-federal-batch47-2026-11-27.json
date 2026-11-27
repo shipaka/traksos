@@ -1,0 +1,403 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Research staging only",
+  "publication_gate": "Confirm actual operation, operator, contact, heavy vehicle scope, exact site, coordinates, duplicates, reuse rights and approval. No outreach.",
+  "records": [
+    {
+      "id": "b47-hom-maly-lutsk",
+      "name": "Hom Service",
+      "region": "Ленинградская область",
+      "address": "Кингисеппский район, д. Малый Луцк",
+      "country": "Россия",
+      "phone": "+7 965 001-20-15",
+      "email": null,
+      "hours": "пн–пт 09:00–18:00; сб 09:00–16:00",
+      "services": [
+        "ремонт полуприцепов"
+      ],
+      "source_urls": [
+        "https://spb.spravker.ru/gorod-kingisepp/remont-pritsepov/"
+      ],
+      "notes": "Уточнить номер здания и фактический въезд.",
+      "operator_group": "hom-maly-lutsk",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false
+    },
+    {
+      "id": "b47-garazh47",
+      "name": "Гараж47 / Монолит-Проф",
+      "region": "Ленинградская область",
+      "address": "Кингисепп, 2-й проезд, 2Г, стр. 1",
+      "country": "Россия",
+      "phone": "+7 953 151-51-89",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт грузовых прицепов"
+      ],
+      "source_urls": [
+        "https://spb.spravker.ru/gorod-kingisepp/remont-pritsepov/"
+      ],
+      "notes": "Один адрес и общий телефон, не две точки. Второй номер +7 981 809-30-01; графики расходятся (09–21 и 24/7), уточнить.",
+      "operator_group": "garazh47",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false
+    },
+    {
+      "id": "b47-poligon-kaskolovka",
+      "name": "Полигон",
+      "region": "Ленинградская область",
+      "address": "Кингисепп, пос. Касколовка",
+      "country": "Россия",
+      "phone": "+7 962 680-99-89",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт полуприцепов"
+      ],
+      "source_urls": [
+        "https://spb.spravker.ru/gorod-kingisepp/remont-pritsepov/"
+      ],
+      "notes": "Точный въезд уточнить.",
+      "operator_group": "poligon-kaskolovka",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false
+    },
+    {
+      "id": "b47-eurotransauto-fosforit",
+      "name": "Евротрансавто",
+      "region": "Ленинградская область",
+      "address": "Кингисеппский район, промзона Фосфорит, Индустриальный проезд, 5",
+      "country": "Россия",
+      "phone": "+7 911 139-25-55",
+      "email": null,
+      "hours": "ежедневно 09:00–18:00",
+      "services": [
+        "грузовой ремонт"
+      ],
+      "source_urls": [
+        "https://spb.spravker.ru/gorod-kingisepp/avtoservisy-avtotehcentry/"
+      ],
+      "notes": "Грузовой профиль указан дополнительно в https://kingisepp.jsprav.ru/tsentryi-po-remontu-gruzovyih-avtomobilej/",
+      "operator_group": "eurotransauto-fosforit",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false
+    },
+    {
+      "id": "b47-gruzmoyka-vavilova",
+      "name": "Грузовая мойка АТП-3 Транссервис",
+      "region": "Ростовская область",
+      "address": "Ростов-на-Дону, ул. Вавилова, 58",
+      "country": "Россия",
+      "phone": "+7 928 279-28-27",
+      "email": null,
+      "hours": "24/7",
+      "services": [
+        "мойка тягачей и полуприцепов",
+        "мойка цистерн и рефрижераторов",
+        "химчистка"
+      ],
+      "source_urls": [
+        "https://gruzmoyka.ru/"
+      ],
+      "notes": "После 19:00 предварительная запись по телефону обязательна согласно сайту.",
+      "operator_group": "gruzmoyka-vavilova",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "truck_wash",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "booking_required_after_local": "19:00"
+    },
+    {
+      "id": "b47-tehmoika-pavlovsky",
+      "name": "Техмойка — Павловский Посад",
+      "region": "Московская область",
+      "address": "Павловский Посад, Корнево-Юдинский пер., 2, корп. 3",
+      "country": "Россия",
+      "phone": "+7 499 490-29-17",
+      "email": "info@msk.tehmoika.com",
+      "hours": "24/7",
+      "services": [
+        "грузовая мойка",
+        "мойка и пропарка автоцистерн",
+        "обслуживание танк-контейнеров"
+      ],
+      "source_urls": [
+        "https://msk.tehmoika.com/"
+      ],
+      "notes": "Ремонт танк-контейнера не равнозначен ремонту полуприцепа.",
+      "operator_group": "tehmoika",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "truck_wash",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false
+    },
+    {
+      "id": "b47-proficlean-m7",
+      "name": "Proficlean",
+      "region": "Республика Татарстан",
+      "address": "М-7, 774-й км, 2, Казань",
+      "country": "Россия",
+      "phone": "+7 987 236-84-26",
+      "email": "2260330@bk.ru",
+      "hours": null,
+      "services": [
+        "грузовая мойка"
+      ],
+      "source_urls": [
+        "https://mestam.info/ru/kazan/mesto/6716874-proficlean-m7-774-kilometr-2"
+      ],
+      "notes": "Второй телефон +7 987 215-04-00; странный график в справочнике, уточнить.",
+      "operator_group": "proficlean-m7",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "truck_wash",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false
+    },
+    {
+      "id": "b47-wash-polevoy",
+      "name": "Мойка — Полевой переулок",
+      "region": "Новгородская область",
+      "address": "Великий Новгород, Полевой пер., 2В",
+      "country": "Россия",
+      "phone": "+7 950 688-11-62",
+      "email": null,
+      "hours": "24/7",
+      "services": [
+        "грузовая мойка по рубрике"
+      ],
+      "source_urls": [
+        "https://vnovgorod.spravker.ru/avtomaticheskie-moiki/"
+      ],
+      "notes": "Проверить высоту ворот и прием тяжелых фур.",
+      "operator_group": "wash-polevoy",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "truck_wash",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false
+    },
+    {
+      "id": "b47-truckpoint-m4",
+      "name": "Truck point",
+      "region": "Краснодарский край",
+      "address": "Краснодар, М-4, 1308-й км, 3",
+      "country": "Россия",
+      "phone": "+7 918 060-47-07",
+      "email": null,
+      "hours": "24/7",
+      "services": [
+        "грузовой шиномонтаж",
+        "грузовая мойка"
+      ],
+      "source_urls": [
+        "https://totadres.ru/krasnodar/org/truck_point/4521354"
+      ],
+      "notes": "На том же адресе Пин-Авто; проверить оператор и самостоятельность площадки.",
+      "operator_group": "truckpoint-m4",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "specialist_mixed",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false
+    },
+    {
+      "id": "b47-alex-auto-artelnaya",
+      "name": "Алекс-Авто — грузовая мойка",
+      "region": "Нижегородская область",
+      "address": "Нижний Новгород, ул. Артельная, 19А",
+      "country": "Россия",
+      "phone": "+7 831 415-18-50",
+      "email": "alexauto-nn@mail.ru",
+      "hours": null,
+      "services": [
+        "грузовая мойка"
+      ],
+      "source_urls": [
+        "https://alexavtonn.ru/service/car-wash/washing-truck/"
+      ],
+      "notes": "Высота ворот 4 м, длина поста 15 м. Грузовой ремонт тяжелых тягачей не подтвержден; ограничения полной сцепки уточнить.",
+      "operator_group": "alex-auto-artelnaya",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "truck_wash",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "entrance_height_m": 4,
+      "bay_length_m": 15
+    }
+  ],
+  "proposed_enrichments": [
+    {
+      "target": "b43-tehmoika-gruzovoy",
+      "source": "https://tehmoika.com/",
+      "email": "info@tehmoika.com",
+      "hours": "24/7",
+      "note": "Own site confirms contact; previous directory 08–20 conflicts. Address 13 vs 13М reconcile."
+    },
+    {
+      "target": "tiropaneftrans",
+      "source": "https://www.tnt-nn.ru/services/moyka/",
+      "address": "Дзержинск, Игумновское шоссе, 4А",
+      "phone": "+7 8313 278-650",
+      "email": "service@tnt-nn.ru",
+      "services": [
+        "грузовая мойка"
+      ],
+      "repair_hours": "ежедневно 08:00–21:00",
+      "note": "Separate wash schedule; no duplicate site."
+    },
+    {
+      "target": "service-avto-trucks-aksay",
+      "source": "https://auto-trucks.com/carwash",
+      "services": [
+        "грузовая мойка",
+        "мойка цистерн и рефрижераторов"
+      ],
+      "email": "servicem4@bk.ru",
+      "note": "Марсово поле 4 vs 4с; confirm entrance, no duplicate."
+    },
+    {
+      "target": "ГрузАвто36 М4 519 км",
+      "source": "https://gruzauto36.com/servis/gruzovaya-avtomoyka/",
+      "phone": "+7 473 233-22-00",
+      "services": [
+        "грузовая мойка"
+      ],
+      "note": "Existing network candidate to identify by address before enrichment."
+    }
+  ],
+  "hold_for_review": [
+    {
+      "name": "TRUCK136",
+      "address": "Лосево, М-4",
+      "phone": "+7 910 738-00-11",
+      "source": "https://truck136.ru/",
+      "reason": "Own site confirms repairs, refrigeration and roadside assistance; exact workshop entrance not specified; not counted."
+    }
+  ],
+  "excluded_exact_matches": [
+    {
+      "candidate": "arsenal-ulyanovskaya",
+      "existing": "arsenal-penza"
+    },
+    {
+      "candidate": "gruzauto36-bogdanovo9",
+      "existing": "gruzauto36-m4"
+    },
+    {
+      "candidate": "gruzauto36-bogdanovo23",
+      "existing": "gruzauto36-m4"
+    }
+  ],
+  "review_notes": [
+    "Source pages retrieved this turn. Directory entries require independent confirmation. Shared operator phones not unique leads; potential physical overlaps explicitly noted.",
+    "Comparisons limited to 108 retrieved records, failed reads [\"sto-spb-lo-batch03\"]. No full national dedup, no phone/FNS verification, no map publication."
+  ]
+}
