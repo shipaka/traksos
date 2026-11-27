@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { geographicCenter, mustExpandCluster } from './partnerNetworkGeometry20261123.ts';
+import { geographicCenter, mustExpandCluster, clusterScreenPoints, fitRussiaView } from './partnerNetworkGeometry20261123.ts';
 import { directoryPoints, directDirectoryDial, type DirectoryPoint } from './stoDirectoryPilot20261127.ts';
 import { TrakServiceIcon } from '../trakServiceIcon.tsx';
 import './partnerNetworkMap20261123.css';
@@ -22,8 +22,8 @@ function samePartner(a:PartnerPoint,b:PartnerPoint){
 type View={lat:number;lng:number;zoom:number};
 type Cluster={key:string;x:number;y:number;members:PartnerPoint[]};
 const TILE=256;
-const MIN_ZOOM=2;
-const MAX_ZOOM=12;
+const MIN_ZOOM=1;
+const MAX_ZOOM=18;
 function clamp(value:number,min:number,max:number){return Math.min(max,Math.max(min,value));}
 function world(lat:number,lng:number,zoom:number){
   const scale=TILE*2**zoom;
@@ -59,21 +59,15 @@ function tileSet(view:View,width:number,height:number){
   return result;
 }
 function clusterPoints(points:PartnerPoint[],v:View,width:number,height:number):Cluster[]{
-  const buckets=new Map<string,Cluster>();
-  const cell=v.zoom<=4?90:v.zoom<=7?72:54;
-  for(const p of points){
-    const pos=pointInViewport(p,v,width,height);
-    if(pos.x< -35||pos.x>width+35||pos.y< -35||pos.y>height+35)continue;
-    const cx=Math.floor(pos.x/cell),cy=Math.floor(pos.y/cell),key=cx+':'+cy;
-    const old=buckets.get(key);
-    if(old){old.members.push(p);old.x=(old.x*(old.members.length-1)+pos.x)/old.members.length;
-      old.y=(old.y*(old.members.length-1)+pos.y)/old.members.length;}
-    else buckets.set(key,{key,x:pos.x,y:pos.y,members:[p]});
-  }
-  return [...buckets.values()];
+  const radius=v.zoom<=4?90:v.zoom<=7?72:54;
+  const screen=points.map(point=>({...pointInViewport(point,v,width,height),point}))
+    .filter(p=>p.x>=-35&&p.x<=width+35&&p.y>=-35&&p.y<=height+35);
+  return clusterScreenPoints(screen,radius).map(group=>({...group,
+    key:group.members.map(p=>p.id).sort().join('|')}));
 }
 export function PartnerNetworkMap({onClose}:{onClose:()=>void}){
-  const [view,setView]=useState<View>({lat:60,lng:93,zoom:3});
+  const [view,setView]=useState<View>(()=>fitRussiaView(850,490));
+  const initialFit=useRef(true);
   const [size,setSize]=useState({width:850,height:490});
   const [points,setPoints]=useState<PartnerPoint[]>(()=>combinePoints([]));
   const [state,setState]=useState<'loading'|'ready'|'error'>('loading');
@@ -215,7 +209,8 @@ export function PartnerNetworkMap({onClose}:{onClose:()=>void}){
   useEffect(()=>{
     const update=()=>{
       if(surface.current){
-        setSize({width:surface.current.clientWidth,height:surface.current.clientHeight});
+        const width=surface.current.clientWidth,height=surface.current.clientHeight;
+        if(width>0&&height>0){setSize({width,height});if(initialFit.current){setView(fitRussiaView(width,height));initialFit.current=false;}}
       }
     };
     update();
@@ -292,7 +287,7 @@ export function PartnerNetworkMap({onClose}:{onClose:()=>void}){
           <button type="button" aria-label="Приблизить карту" disabled={view.zoom===MAX_ZOOM} onClick={()=>zoom(1)}>+</button>
           <button type="button" aria-label="Отдалить карту" disabled={view.zoom===MIN_ZOOM} onClick={()=>zoom(-1)}>−</button>
           <button type="button" aria-label="Показать Санкт-Петербург и область" onClick={()=>{setView({lat:59.86,lng:30.47,zoom:10});setSelected(null);setExpandedCluster(null);}}>СПб / ЛО</button>
-          <button type="button" aria-label="Показать Россию" onClick={()=>{setView({lat:60,lng:93,zoom:3});setSelected(null);setExpandedCluster(null);}}>Россия</button>
+          <button type="button" aria-label="Показать Россию" onClick={()=>{setView(fitRussiaView(size.width,size.height));setSelected(null);setExpandedCluster(null);}}>Россия</button>
         </div>
         {clusters.map(cluster=><button key={cluster.key} type="button"
           className={'tr-network-marker'+(cluster.members.length>1?' is-cluster':'')+markerClass(cluster.members)}
@@ -322,7 +317,7 @@ export function PartnerNetworkMap({onClose}:{onClose:()=>void}){
           }}>{cluster.members.length>1?<span>{cluster.members.length}</span>:cluster.members[0].directory?<TrakServiceIcon kind="sto" size={30}/>:'●'}</button>)}
         {expandedCluster&&<aside className="tr-network-cluster-list"
           role="group" aria-label="Выбрать СТО из группы">
-          <div className="tr-network-cluster-head"><b>СТО в одной точке ({expandedCluster.members.length})</b>
+          <div className="tr-network-cluster-head"><b>СТО в группе ({expandedCluster.members.length})</b>
             <button type="button" aria-label="Скрыть список партнёров" onClick={()=>{
               setExpandedCluster(null);
               restoreMarkerFocus(clusterTrigger.current);
