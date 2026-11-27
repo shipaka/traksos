@@ -1521,18 +1521,8 @@ async function patchMe(body: unknown) {
 }
 
 export async function logout() {
-  const { post, setToken, disconnectWs } = await import('../api.ts');
-  try {
-    await post('/api/auth/logout');
-  } catch (e) {
-    // Do not silently sign a worker out while the server still marks them on a job.
-    window.alert((e as Error).message || 'Не удалось завершить выход. Проверьте подключение.');
-    return;
-  }
-  setToken(null);
-  disconnectWs();
-  location.hash = '#/login';
-  location.reload();
+  const {logoutSession}=await import('../sessionLogout.ts');
+  await logoutSession();
 }
 
 const PRIO: [string, string][] = [['recommended','Рекомендуем'],['near', 'Ближе'], ['cheap', 'Дешевле'], ['brand', 'Знает марку'], ['fast', 'Быстрее приедет']];
