@@ -1,0 +1,388 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Research staging only; not production import",
+  "publication_gate": "Confirm actual operation, legal operator, exact coordinates and access, reuse rights, duplicates and admin approval. No calls or official FNS extracts. No automated outreach.",
+  "records": [
+    {
+      "id": "trucklab-nsk",
+      "name": "Truck Lab",
+      "region": "Новосибирская область",
+      "address": "Новосибирск, ул. Большая, 228, к. 1",
+      "country": "Россия",
+      "phone": "+7 913 371-22-76",
+      "email": null,
+      "hours": "пн–пт 09:00–18:00",
+      "services": [
+        "грузовики",
+        "полуприцепы",
+        "электрика",
+        "пневматика",
+        "ДВС",
+        "сварка"
+      ],
+      "source_urls": [
+        "https://trucklab.ru/"
+      ],
+      "notes": "Доп. телефон +7 913 711-52-80. Ремонт КПП и редукторов выполняют партнёры; не считать собственным агрегатным цехом.",
+      "operator_group": "trucklab",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "gruzovoz-nsk",
+      "name": "Грузовоз",
+      "region": "Новосибирская область",
+      "address": "Новосибирск, ул. Ивана Титкова, 20",
+      "country": "Россия",
+      "phone": "+7 383 367-08-57",
+      "email": null,
+      "hours": "ежедневно 09:00–20:00",
+      "services": [
+        "грузовой ремонт",
+        "ТО"
+      ],
+      "source_urls": [
+        "https://gruzovoz.co/contact/"
+      ],
+      "notes": "MAN, Scania, Mercedes. Доп. +7 923 733-83-31.",
+      "operator_group": "gruzovoz",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "nord-service-ob",
+      "name": "Норд Сервис",
+      "region": "Новосибирская область",
+      "address": "Обь, ул. Путейцев, 24",
+      "country": "Россия",
+      "phone": "+7 913 917-29-37",
+      "email": null,
+      "hours": "пн–пт 09:00–19:00, сб–вс 10:00–19:00",
+      "services": [
+        "грузовики",
+        "полуприцепы",
+        "ДВС",
+        "КПП",
+        "пневматика",
+        "электрика",
+        "диагностика"
+      ],
+      "source_urls": [
+        "https://www.nord-service54.ru/"
+      ],
+      "notes": "Фактический адрес в Оби, а не в Новосибирске. Контакт и график опубликованы на сайте.",
+      "operator_group": "nord-service54",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "eurospec-nsk",
+      "name": "ЕвроСпец",
+      "region": "Новосибирская область",
+      "address": "Новосибирск, ул. Чекалина, 4А",
+      "country": "Россия",
+      "phone": "+7 383 209-21-11",
+      "email": "sales@ng154.ru",
+      "hours": "пн–пт 10:00–19:00",
+      "services": [
+        "тягачи",
+        "полуприцепы",
+        "кузовной ремонт",
+        "рамы",
+        "сварка",
+        "окраска",
+        "пескоструйная обработка"
+      ],
+      "source_urls": [
+        "https://eurospec.su/"
+      ],
+      "notes": "Специализированный кузовной профиль; полный перечень слесарных работ уточнить.",
+      "operator_group": "eurospec",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "btc-krasny-vostok",
+      "name": "Бизнес Трак Центр — Новосибирск",
+      "region": "Новосибирская область",
+      "address": "пос. Красный Восток, ул. Советская, 26/1",
+      "country": "Россия",
+      "phone": "+7 343 319-11-01",
+      "email": null,
+      "hours": "пн–вс 09:00–21:00 (сайт сети)",
+      "services": [
+        "грузовики",
+        "полуприцепы",
+        "диагностика",
+        "электрика",
+        "соосность колес"
+      ],
+      "source_urls": [
+        "https://btc-u.ru/nsk/"
+      ],
+      "notes": "Номер общий сетевой, код Екатеринбурга; запросить прямой телефон филиала. Заезд с Ордынского шоссе.",
+      "operator_group": "btc-u",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "nts-tomsk",
+      "name": "НТС",
+      "region": "Томская область",
+      "address": "Томск, ул. Вилюйская, 52/11",
+      "country": "Россия",
+      "phone": "+7 923 422-77-72",
+      "email": "newfuelsystems@mail.ru",
+      "hours": "08:00–17:00 (дни не указаны)",
+      "services": [
+        "грузовики",
+        "полуприцепы",
+        "ДВС",
+        "топливные системы",
+        "электрика",
+        "сварка"
+      ],
+      "source_urls": [
+        "https://sto-nts.ru/"
+      ],
+      "notes": "Доп. +7 903 955-77-72; ИНН 7000006164 опубликован компанией. Второй фактический адрес Иркутский тракт 63/1 требует уточнения профиля, не добавлен как отдельное СТО.",
+      "operator_group": "nts70",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "masterservis-tomsk",
+      "name": "Мастер Сервис",
+      "region": "Томская область",
+      "address": "Томск, Мостовой переулок, 2А, стр. 1",
+      "country": "Россия",
+      "phone": "+7 913 806-32-73",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой ремонт",
+        "спецтехника",
+        "полуприцепы",
+        "монтаж подъемных осей"
+      ],
+      "source_urls": [
+        "https://master-servis-remont-gruzovyh.clients.site/"
+      ],
+      "notes": "Публичная бизнес-страница на платформе Яндекса; не независимое подтверждение актуальности. График уточнить.",
+      "operator_group": "masterservis-tomsk",
+      "evidence": "business_hosted_page",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "truckrelax-kemerovo",
+      "name": "Трак Релакс",
+      "region": "Кемеровская область",
+      "address": "Кемеровский муниципальный округ, территория Северный Пост, 3",
+      "country": "Россия",
+      "phone": "+7 3842 44-77-88",
+      "email": "info@truckrelax.ru",
+      "hours": "ежедневно 09:00–21:00",
+      "services": [
+        "тягачи",
+        "полуприцепы",
+        "пневматика",
+        "электрика",
+        "ДВС",
+        "КПП",
+        "рефрижераторы",
+        "шиномонтаж",
+        "эвакуация"
+      ],
+      "source_urls": [
+        "https://truckrelax.ru/"
+      ],
+      "notes": "Круглосуточная эвакуация заявлена отдельно от стационарного графика.",
+      "operator_group": "truckrelax",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "nztruck-metallploshchadka",
+      "name": "NZ Truck — сервис грузовых тягачей",
+      "region": "Кемеровская область",
+      "address": "Кемеровский район, пос. Металлплощадка, ул. Воскресенская, 5",
+      "country": "Россия",
+      "phone": "+7 903 070-37-35",
+      "email": null,
+      "hours": "ежедневно 09:00–19:00",
+      "services": [
+        "грузовые тягачи",
+        "ходовая",
+        "сход-развал",
+        "сварка",
+        "спецтехника"
+      ],
+      "source_urls": [
+        "https://www.nz-truck.ru/uslugi-servisa/"
+      ],
+      "notes": "Прямой номер записи именно на грузовую площадку, не малотоннажную СТО Нова.",
+      "operator_group": "nz-truck",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "kmpk-kemerovo",
+      "name": "КМПК — Кемерово",
+      "region": "Кемеровская область",
+      "address": "Кемерово, просп. Кузнецкий, 127/6",
+      "country": "Россия",
+      "phone": "+7 3842 377-111",
+      "email": "kmpk@kmpk.ru",
+      "hours": "пн–пт 08:30–17:30",
+      "services": [
+        "грузовая техника",
+        "сервис",
+        "запчасти"
+      ],
+      "source_urls": [
+        "https://www.kmpk.ru/about/contacts/"
+      ],
+      "notes": "Общая линия грузового направления; дополнительная линия сервиса +7 900 103-80-00. Конкретный ремонтный пост и профиль уточнить.",
+      "operator_group": "kmpk",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "altai-asko-trans",
+      "name": "Алтай-Аско-Транс",
+      "region": "Алтайский край",
+      "address": "Барнаул, Павловский тракт, 200Ф",
+      "country": "Россия",
+      "phone": "+7 3852 50-02-02",
+      "email": "store@aat22.ru",
+      "hours": "ежедневно 08:00–21:00",
+      "services": [
+        "тягачи",
+        "полуприцепы",
+        "пневматика",
+        "тормоза",
+        "ДВС",
+        "трансмиссия",
+        "диагностика"
+      ],
+      "source_urls": [
+        "https://altaiaskotrans.ru/contacts/",
+        "https://altaiaskotrans.ru/"
+      ],
+      "notes": "Доп. телефоны записи +7 963 521-23-03 и +7 962 790-18-79. ИНН 2222048840 опубликован компанией, не проверен в ФНС.",
+      "operator_group": "altaiaskotrans",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "truckmaster-barnaul",
+      "name": "Трак-Мастер",
+      "region": "Алтайский край",
+      "address": "Барнаул, ул. Власихинская, 194",
+      "country": "Россия",
+      "phone": "+7 3852 50-40-17",
+      "email": "504017@bk.ru",
+      "hours": "ежедневно 08:00–20:00",
+      "services": [
+        "японские и корейские грузовики",
+        "ДВС",
+        "КПП",
+        "топливная система",
+        "тормоза",
+        "электрика"
+      ],
+      "source_urls": [
+        "https://truckmaster.ru/barnaul/contacts/"
+      ],
+      "notes": "Прямой номер автосервиса, не магазина. Цех ГБЦ: Власихинская 194А, +7 3852 50-78-95. Прием тяжёлых тягачей уточнить. ИНН 2222827476 по сайту.",
+      "operator_group": "truckmaster-altai",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    }
+  ]
+}
