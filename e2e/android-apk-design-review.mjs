@@ -97,7 +97,11 @@ try {
       }
     } else {
       const toggle=page.locator('.and19-line button');
-      if (!await toggle.count())throw Error('Performer availability is missing');
+      if (await toggle.count()!==1 || !(await toggle.innerText()).includes('На линии'))throw Error('Synthetic performer availability is missing');
+      await toggle.click();
+      if (!page.url().endsWith('/#/android-review/'+role) || !await page.getByText('Это просмотр оформления.',{exact:false}).count() || apiMutations.length)
+        throw Error('Synthetic status control must remain inert and never change account data');
+      if (await page.locator('[aria-label="Выбор доступности"]').count())throw Error('Synthetic status must not open live controls');
       if (!await page.locator('.and19-main-order .and19-timeline').count())throw Error('Performer timeline missing');
       if (!await page.locator('.and19-client-contact').count())
         throw Error('Approved 618.png client-contact card absent from synthetic performer review');

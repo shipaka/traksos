@@ -13,6 +13,8 @@ import { ApprovedOrderTruck } from '../approvedOrderTruck.tsx';
 import { vehicleReferencePhoto } from '../vehiclePhotoCatalog.ts';
 import { NavGlyph } from '../navGlyph.tsx';
 import { OrderPhotoCapture } from './orderPhotos.tsx';
+import { PcPerformerAvailability } from './pcPerformerAvailability.tsx';
+import { ownRatingLabel, type OwnRating } from '../ownRating.ts';
 
 /** Render a single role dashboard per viewport, rather than hiding a live component tree with CSS. */
 export function useMobileWorkspace() {
@@ -247,14 +249,13 @@ export function AndroidClientWorkspace({ orders, loading, error, me, retry, insu
   </div>;
 }
 
-export function AndroidPerformerWorkspace({ performer, active, auctions, online, busy, setLine, balance,
-  reloadAuctions, reloadJobs, todayCount=0, pendingReview=0, reviewOnly=false }: {
+export function AndroidPerformerWorkspace({ performer, active, auctions, online, busy, balance,
+  reloadAuctions, reloadJobs, todayCount=0, pendingReview=0, reviewOnly=false, accountRating }: {
   performer: any; active: any[]; auctions: any[]; online: boolean; busy: boolean;
-  setLine: (status: string) => void; balance: any; reloadAuctions: () => void;
-  reloadJobs?: () => void; todayCount?: number; pendingReview?: number; reviewOnly?:boolean;
+  balance: any; reloadAuctions: () => void;
+  reloadJobs?: () => void; todayCount?: number; pendingReview?: number; reviewOnly?:boolean; accountRating?:OwnRating|null;
 }) {
   const tow = performer.kind === 'tow';
-  const inJob = performer.line_status === 'on_job';
   const current=active[0];
   const { busy: stageBusy, run: runStage } = useAction();
   const stepForStatus: Record<string, {action:'depart'|'arrive'|'start_work';label:string}> = {
@@ -273,17 +274,18 @@ export function AndroidPerformerWorkspace({ performer, active, auctions, online,
   return <div className="and19-workspace and19-performer" aria-label="Android рабочий стол исполнителя">
     <div className="and19-role and19-line">
       <span className="and19-role-caption"><NavGlyph glyph="⚙" />{tow ? 'Эвакуаторщик' : 'Выездной мастер'}</span>
-      <button type="button" disabled={busy || inJob} className={online ? 'and19-online' : 'and19-offline'}
-        aria-label={inJob ? 'На выезде — нельзя сменить статус' : 'Изменить статус доступности'}
-        onClick={() => setLine(online ? 'offline' : 'online')}>
-        <i />{inJob ? 'На выезде' : online ? 'На линии' : 'Не на линии'}
-        <span aria-hidden="true" className="and19-toggle" />
-      </button>
+      {reviewOnly ? <div className="stack performer-mobile-availability" aria-label="Доступность исполнителя">
+        <button className="opt" type="button" aria-expanded={false}>
+          <b><span className="dot on" aria-hidden="true"/> Статус · На линии</b>
+          <small>Изменить доступность ⌄</small>
+        </button>
+        <a className="note" href="#/work/me/schedule">Настройки графика →</a>
+      </div> : <PcPerformerAvailability mobile onChanged={reloadAuctions}/>}
     </div>
     <div className="and19-cover"><h1>Рабочий стол</h1></div>
     <div className="and19-metrics">
       <a href="#/work/jobs"><NavGlyph glyph="clipboard"/><span><small>Сегодня</small><strong>{todayCount} заяв.</strong></span></a>
-      <a href="#/work/me/level"><NavGlyph glyph="star"/><span><small>Рейтинг</small><strong>{performer.rating != null ? Number(performer.rating).toFixed(1).replace('.',',') : '—'}</strong></span></a>
+      <a href="#/work/me/level"><NavGlyph glyph="star"/><span><small>Рейтинг</small><strong>{ownRatingLabel(accountRating)}</strong></span></a>
       <a href="#/work/me/money"><NavGlyph glyph="coins"/><span><small>К выплате</small><strong>{balance?.to_pay != null ? rub(balance.to_pay) : '—'}</strong></span></a>
     </div>
     {active.length ? <section className="and19-panel and19-main-order">

@@ -12,6 +12,8 @@ import './performerMobileWork.css';
 import { VehiclePhotoLink } from '../vehicleVisual.tsx';
 import { AndroidPerformerWorkspace, useMobileWorkspace } from './androidWorkspaces.tsx';
 import { PerformerHub } from './performerCabinet.tsx';
+import { PcPerformerAvailability } from './pcPerformerAvailability.tsx';
+import { ownRatingLabel } from '../ownRating.ts';
 
 // Линия: статус, геолокация, входящие ---------------------------------------
 
@@ -25,9 +27,9 @@ function WorkForAccount({background=false}:{background?:boolean}={}) {
   const { me, reload } = useMe();
   const mobileWorkspace = useMobileWorkspace();
   const { busy, run } = useAction();
-  const [compact, setCompact] = useState(() => window.matchMedia('(max-width: 820px)').matches);
+  const [compact, setCompact] = useState(() => window.matchMedia('(max-width: 899px)').matches);
   useEffect(() => {
-    const mq = window.matchMedia('(max-width: 820px)');
+    const mq = window.matchMedia('(max-width: 899px)');
     const sync = () => setCompact(mq.matches);
     mq.addEventListener('change', sync);
     return () => mq.removeEventListener('change', sync);
@@ -65,16 +67,16 @@ function WorkForAccount({background=false}:{background?:boolean}={}) {
   if (mobileWorkspace && native.isApp && !background) return <main className="work-live-dashboard">
     <WorkerNotices />
     <AndroidPerformerWorkspace performer={p} active={active} auctions={auctions.data ?? []} online={online}
-      busy={busy} setLine={setLine} balance={balance.data} reloadAuctions={auctions.reload}
-      reloadJobs={jobs.reload} todayCount={todayCount} pendingReview={toReview.length}/>
+      busy={busy} balance={balance.data} reloadAuctions={auctions.reload}
+      reloadJobs={jobs.reload} todayCount={todayCount} pendingReview={toReview.length} accountRating={me}/>
     <LiveStrip who={p.kind === 'tow' ? 'tow' : 'master'} />
     {online && <LocationSharing />}
   </main>;
 
-  if (compact && !background) return <MobilePerformerWork p={p} personName={me?.name ?? undefined}
+  if (compact && !background) return <MobilePerformerWork p={p} personName={me?.name ?? undefined} ratingLabel={ownRatingLabel(me)}
     active={active} awaiting={toReview} jobs={jobs.data ?? []} incoming={auctions.data ?? []}
     onOfferDone={auctions.reload} balance={balance.data} online={online}
-    busy={busy} setLine={setLine} />;
+    />;
 
   return (
     <main className="work-live-dashboard">
@@ -88,6 +90,7 @@ function WorkForAccount({background=false}:{background?:boolean}={}) {
             : online ? 'Вы на линии. Новые заявки, предложения и рабочие уведомления появятся на этом экране.'
               : 'Ваш рабочий стол. Выберите статус доступности ниже, чтобы управлять приёмом заявок.'}</p>
           <div className="work-command-tags">
+            <a className="work-command-status" href="#/work/me/level" aria-label={'Мой рейтинг: '+ownRatingLabel(me)}>{ownRatingLabel(me)}</a>
             <span className="work-command-status"><span className={'dot ' + (online ? 'on' : '')} />{LINE[p.line_status] ?? 'Статус не указан'}</span>
             {p.verification === 'approved' ? <VerifiedBadge verified kind={p.kind === 'tow' ? 'tow' : 'specialist'} /> : <button type="button" className="traksos-verify-invite" onClick={() => go('work/docs')}>◇ Подтвердить профиль · узнать преимущества ›</button>}
           </div>
@@ -240,16 +243,13 @@ function MobileWorkSearch({jobs,incoming,onOfferDone,intent}:{
  * All numbers, orders and offers are read from exactly the same authenticated API
  * responses as the desktop. No fake progress, no offline status mutations.
  */
-function MobilePerformerWork({p, personName, active, awaiting, jobs, incoming, onOfferDone,
-  balance, online, busy, setLine}: {
-  p:any; personName?:string; active:any[]; awaiting:any[]; jobs:any[]; incoming:any[];
-  onOfferDone:()=>void; balance:any; online:boolean; busy:boolean;
-  setLine:(line:string, until?:string)=>void;
+function MobilePerformerWork({p, personName, ratingLabel, active, awaiting, jobs, incoming, onOfferDone,
+  balance, online}: {
+  p:any; personName?:string; ratingLabel:string; active:any[]; awaiting:any[]; jobs:any[]; incoming:any[];
+  onOfferDone:()=>void; balance:any; online:boolean;
 }) {
   const first = active[0];
   const [searchIntent,setSearchIntent] = useState<{scope:'incoming'|'mine'|'archive';count:number}>({scope:'mine',count:0});
-  const [lineOptionsOpen,setLineOptionsOpen] = useState(false);
-  const switchable = ['online','offline'].includes(p.line_status);
   const stage:Record<string,string> = {
     accepted:'Принята — пора выезжать', en_route:'Вы в пути', arrived:'Вы на месте',
     working:'Идёт работа', awaiting_confirmation:'Ждём подтверждения клиента',
@@ -260,18 +260,9 @@ function MobilePerformerWork({p, personName, active, awaiting, jobs, incoming, o
       <h1>Рабочая смена</h1>
       <div className="work-mobile-person">
         <span>{personName || (p.kind==='tow' ? 'Эвакуаторщик' : 'Мастер')}</span>
-        <div className="work-mobile-presence">
-          <span className="work-mobile-state"><span className={'dot '+(online?'on':'')}/>
-            {p.line_status==='online'?'На линии':LINE[p.line_status] || 'Доступность не указана'}</span>
-          {switchable && <button type="button" role="switch"
-            className={'work-mobile-switch'+(p.line_status==='online'?' is-on':'')}
-            aria-label="Принимать новые заявки" aria-checked={p.line_status==='online'}
-            title={p.line_status==='online'?'Уйти с линии':'Выйти на линию'}
-            disabled={busy} onClick={()=>setLine(p.line_status==='online'?'offline':'online')}>
-            <span aria-hidden="true"/>
-          </button>}
-        </div>
       </div>
+      <a className="work-mobile-state" href="#/work/me/level" aria-label={'Мой рейтинг: '+ratingLabel}>{ratingLabel}</a>
+      <PcPerformerAvailability mobile onChanged={onOfferDone}/>
     </header>
     <WorkerNotices />
     <MobileWorkSearch jobs={jobs} incoming={incoming} onOfferDone={onOfferDone} intent={searchIntent}/>
@@ -292,12 +283,7 @@ function MobilePerformerWork({p, personName, active, awaiting, jobs, incoming, o
       <a className="btn ghost" href="#/work/docs">Проверка и документы</a>
     </section>}
     {<div className="work-mobile-extra-presence">
-      <button className="work-mobile-extra-button" type="button"
-        aria-expanded={lineOptionsOpen} onClick={()=>setLineOptionsOpen(v=>!v)}>
-        {p.line_status==='on_job'?'Статус: на выезде · настройки заблокированы':'Перерыв, статус звонка и настройки заявок'} 
-        <span aria-hidden="true">{lineOptionsOpen?'⌃':'⌄'}</span>
-      </button>
-      {lineOptionsOpen && <LineCard p={p} busy={busy} setLine={setLine} online={online} shareLocation={false}/>}
+      <SearchSettingsLink p={p}/>
       {online && <div className="work-mobile-location"><LocationSharing/></div>}
     </div>}
     {first ? <section className="work-mobile-current card" aria-label="Активная заявка">

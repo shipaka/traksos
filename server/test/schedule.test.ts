@@ -60,16 +60,50 @@ test('конец рабочего дня снимает с линии; ручн�
   ok(await t.api('POST', `/api/orders/${o.order.id}/cancel`, { reason: 'тест' }, client.token));
 });
 
-test('перерыв (обед): не звоним, по таймеру — снова «Свободен»', async () => {
+test('перерыв (обед): пауза не сбрасывает таймер, по таймеру — снова «Свободен»', async () => {
   const until = new Date(t.clock.now().getTime() + 30 * 60_000).toISOString();
+  const read = () => t.api('GET', '/api/performer/profile', undefined, master.token).then(ok);
+  const assertBreak = async (paused: boolean) => {
+    const me = await read();
+    assert.equal(me.line_status, 'busy');
+    assert.equal(me.paused, paused);
+    assert.ok(me.busy_until, 'timed break must keep its deadline');
+    assert.equal(new Date(me.busy_until).toISOString(), until);
+  };
   ok(await t.api('POST', '/api/performer/line', { lineStatus: 'busy', busyUntil: until }, master.token));
+  await assertBreak(false);
+  ok(await t.api('POST', '/api/performer/line', { paused: true }, master.token));
+  await assertBreak(true);
+  ok(await t.api('POST', '/api/performer/line', { paused: false }, master.token));
+  await assertBreak(false);
   const o = ok(await t.api('POST', '/api/orders', { service: 'electric', zoneId: 'spb', description: 'Нет света в кабине' }, client.token));
   assert.equal(invited(o.order.id), false);
   ok(await t.api('POST', `/api/orders/${o.order.id}/cancel`, { reason: 'тест' }, client.token));
-  t.clock.advance(31 * 60);
+  t.clock.advance(29 * 60);
   await t.app.orders.tick();
-  const me = ok(await t.api('GET', '/api/performer/profile', undefined, master.token));
+  await assertBreak(false);
+  ok(await t.api('POST', '/api/performer/line', { paused: true }, master.token));
+  await assertBreak(true);
+  t.clock.advance(2 * 60);
+  await t.app.orders.tick();
+  const me = await read();
   assert.equal(me.line_status, 'online');
+  assert.equal(me.busy_until, null);
+  assert.equal(me.paused, true, 'expiring break must not remove a separate pause');
+  const pausedOrder = ok(await t.api('POST', '/api/orders', { service: 'electric', zoneId: 'spb', description: 'Учебная заявка на паузе' }, client.token));
+  assert.equal(invited(pausedOrder.order.id), false);
+  ok(await t.api('POST', `/api/orders/${pausedOrder.order.id}/cancel`, { reason: 'тест' }, client.token));
+  ok(await t.api('POST', '/api/performer/line', { paused: false }, master.token));
+  assert.equal((await read()).paused, false);
+  const next = ok(await t.api('POST', '/api/orders', { service: 'electric', zoneId: 'spb', description: 'Учебная заявка после перерыва' }, client.token));
+  assert.equal(invited(next.order.id), true);
+  ok(await t.api('POST', `/api/orders/${next.order.id}/cancel`, { reason: 'тест' }, client.token));
+  // An explicit status change, unlike a pause-only update, cancels the deadline.
+  const nextUntil = new Date(t.clock.now().getTime() + 15 * 60_000).toISOString();
+  ok(await t.api('POST', '/api/performer/line', { lineStatus: 'busy', busyUntil: nextUntil }, master.token));
+  ok(await t.api('POST', '/api/performer/line', { lineStatus: 'offline' }, master.token));
+  assert.equal((await read()).busy_until, null);
+  ok(await t.api('POST', '/api/performer/line', { lineStatus: 'online' }, master.token));
 });
 
 test('отпуск: заявки не приходят; наценки и «с собой» видны клиенту в отклике', async () => {

@@ -126,7 +126,7 @@ export function createApp(d: Deps) {
   const trakbot = new TrakBotService(d.db);
   const driverAir = new DriverAirService(d.db, now);
   const technicalCases = new TechnicalCasesService(d.db);
-  const reviews = new ReviewsService(d.db, settings, orders);
+  const reviews = new ReviewsService(d.db, settings, orders, userId => notifier.live([userId], { type: 'rating_changed' }));
   const onsite = new OnsiteService(d.db, notifier, orders);
   const offers = new OffersService(d.db, notifier, now, settings);
   const documents = new DocumentsService(d.db, notifier, settings, now);
@@ -724,24 +724,35 @@ export function createApp(d: Deps) {
   r.get('/api/performer/profile', true, (c: AuthedCtx) => profiles.performer(c.user.id));
   r.put('/api/performer/profile', true, (c: AuthedCtx) =>
     profiles.upsertPerformer(c.user, parse(performerProfileSchema, c.body)));
-  r.put('/api/performer/extras', performerRoles, (c: AuthedCtx) =>
-    profiles.setExtras(c.user.id, parse(performerExtrasSchema, c.body)));
+  // The profile remains authoritative. Send only a private invalidation hint
+  // after successful writes, never a status or profile snapshot to other users.
+  const availabilityChanged = (userId: string) => notifier.live([userId], { type: 'performer_availability_changed' });
+  r.put('/api/performer/extras', performerRoles, async (c: AuthedCtx) => {
+    const body = parse(performerExtrasSchema, c.body);
+    const result = await profiles.setExtras(c.user.id, body);
+    if (body.vacation !== undefined) availabilityChanged(c.user.id);
+    return result;
+  });
   // Profile matching and its presentation/conditions now commit in one transaction.
   // A failure to save either half must roll back the entire request.
-  r.put('/api/performer/request-settings', performerRoles, (c: AuthedCtx) => {
+  r.put('/api/performer/request-settings', performerRoles, async (c: AuthedCtx) => {
     const body = parse(z.object({
       profile: performerProfileSchema,
       extras: performerExtrasSchema,
     }).strict(), c.body);
-    return profiles.upsertPerformer(c.user, body.profile, body.extras);
+    const result = await profiles.upsertPerformer(c.user, body.profile, body.extras);
+    if (body.extras.vacation !== undefined) availabilityChanged(c.user.id);
+    return result;
   });
-  r.put('/api/performer/schedule', performerRoles, (c: AuthedCtx) => {
+  r.put('/api/performer/schedule', performerRoles, async (c: AuthedCtx) => {
     const t = z.string().regex(/^\d{2}:\d{2}$/);
     const day = z.boolean();
-    return profiles.setSchedule(c.user.id, parse(z.object({
+    const result = await profiles.setSchedule(c.user.id, parse(z.object({
       on: z.boolean(), from: t, to: t, phoneTo: t,
       days: z.object({ mon: day, tue: day, wed: day, thu: day, fri: day, sat: day, sun: day }),
     }), c.body));
+    availabilityChanged(c.user.id);
+    return result;
   });
   r.get('/api/performer/ledger', performerRoles, (c: AuthedCtx) => profiles.ledger(c.user.id));
   r.post('/api/performer/line', performerRoles, async (c: AuthedCtx) => {
@@ -749,7 +760,9 @@ export function createApp(d: Deps) {
       lineStatus: z.enum(['online', 'on_call', 'busy', 'offline']).optional(), busyUntil: z.string().datetime().nullish(), paused: z.boolean().optional(),
     }), c.body);
     if (b.lineStatus === 'online') await offers.requirePerformer(c.user);
-    return profiles.setLine(c.user.id, b);
+    const result = await profiles.setLine(c.user.id, b);
+    if (b.lineStatus !== undefined || b.paused !== undefined) availabilityChanged(c.user.id);
+    return result;
   });
   r.post('/api/performer/location', performerRoles, async (c: AuthedCtx) => {
     const b = parse(z.object({ lat: z.number().min(-90).max(90), lng: z.number().min(-180).max(180) }), c.body);
