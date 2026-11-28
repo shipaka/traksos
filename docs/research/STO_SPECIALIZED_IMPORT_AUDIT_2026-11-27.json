@@ -1,0 +1,3237 @@
+{
+  "schema": "sto-specialized-import-audit-v1",
+  "previous_drafts": 511,
+  "source_rows": 217,
+  "added_drafts": 203,
+  "held_count": 14,
+  "expected_drafts": 714,
+  "source_coordinates": 46,
+  "missing_coordinates": 668,
+  "byCategory": {
+    "tyre": 42,
+    "sto": 105,
+    "wash": 29,
+    "trailer": 27
+  },
+  "byBatch": {
+    "sto-tire-and-compass-batch42": {
+      "input": 53,
+      "added": 52,
+      "held": 1
+    },
+    "sto-and-truck-wash-batch43": {
+      "input": 17,
+      "added": 16,
+      "held": 1
+    },
+    "sto-wash-spb-m10-batch44": {
+      "input": 7,
+      "added": 6,
+      "held": 1
+    },
+    "sto-wash-northwest-batch45": {
+      "input": 13,
+      "added": 13,
+      "held": 0
+    },
+    "sto-wash-northwest-yaroslavl-batch46": {
+      "input": 10,
+      "added": 10,
+      "held": 0
+    },
+    "sto-wash-federal-batch47": {
+      "input": 10,
+      "added": 10,
+      "held": 0
+    },
+    "sto-ural-trailer-wash-tire-batch48": {
+      "input": 103,
+      "added": 92,
+      "held": 11
+    },
+    "sto-kogel-wash-review-batch49": {
+      "input": 4,
+      "added": 4,
+      "held": 0
+    }
+  },
+  "held": [
+    {
+      "source_file": "sto-tire-and-compass-batch42-2026-11-27.json",
+      "source_id": "b42-1001-lensovetovsky",
+      "name": "1001 Шина — lensovetovsky",
+      "address": "Санкт-Петербург, пос. Ленсоветовский, Московское шоссе, 235, лит. Л",
+      "phone": null,
+      "reason": "incomplete_or_invalid",
+      "existing": null
+    },
+    {
+      "source_file": "sto-and-truck-wash-batch43-2026-11-27.json",
+      "source_id": "b43-moika-spa-kotelniki",
+      "name": "Мойка СПА",
+      "address": "Московская область, Котельники, Новорязанское шоссе, 6",
+      "phone": "+79257541146",
+      "reason": "shared_address_review",
+      "existing": "directory:research-35-bolshegruz-kotelniki"
+    },
+    {
+      "source_file": "sto-wash-spb-m10-batch44-2026-11-27.json",
+      "source_id": "b44-atp-avtomobilnaya8v",
+      "name": "АТП — грузовая мойка",
+      "address": "Санкт-Петербург, ул. Автомобильная, 8, лит. В",
+      "phone": "+79379449408",
+      "reason": "same_address_and_contact_or_name",
+      "existing": "directory:wash-atp-spb"
+    },
+    {
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-28",
+      "name": "Техсервис-Хабаровск",
+      "address": "Хабаровский край, Хабаровск, Павла Морозова 65",
+      "phone": "+74212789545",
+      "reason": "same_phone_and_name_review_address",
+      "existing": "directory:research-b48-27"
+    },
+    {
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-31",
+      "name": "Урал-Спецмаш",
+      "address": "Ханты-Мансийский автономный округ — Югра, Сургут, Рационализаторов 27 сооружение 6",
+      "phone": "+79128191221",
+      "reason": "same_phone_and_name_review_address",
+      "existing": "directory:research-34-ural-specmash-surgut"
+    },
+    {
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-32",
+      "name": "СургутДрайв",
+      "address": "Ханты-Мансийский автономный округ — Югра, Сургут, Профсоюзов 59",
+      "phone": "+73462511465",
+      "reason": "same_phone_and_name_review_address",
+      "existing": "directory:research-37-surgutdrive"
+    },
+    {
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-48",
+      "name": "БАЙКАЛИТ СКЦ",
+      "address": "Иркутская область, заимка Вдовина, Дорожная 96/1",
+      "phone": "+73952718609",
+      "reason": "same_phone_and_name_review_address",
+      "existing": "directory:research-36-baikalit-vdovina"
+    },
+    {
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-50",
+      "name": "БайкалАвтоТрак",
+      "address": "Иркутская область, Усть-Кут, Новосёлов 5Б",
+      "phone": "+78003335015",
+      "reason": "same_phone_and_name_review_address",
+      "existing": "directory:research-33-baikalavtotruck"
+    },
+    {
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-52",
+      "name": "БайкалАвтоТрак",
+      "address": "Калужская область, д. Старомихайловское, 1-я Индустриальная вл. 7",
+      "phone": "+78003335015",
+      "reason": "same_phone_and_name_review_address",
+      "existing": "directory:research-33-baikalavtotruck"
+    },
+    {
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-57",
+      "name": "БайкалАвтоТрак",
+      "address": "Магаданская область, Магадан, Кожзаводская 12/1",
+      "phone": "+78003335015",
+      "reason": "same_phone_and_name_review_address",
+      "existing": "directory:research-33-baikalavtotruck"
+    },
+    {
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-92",
+      "name": "РТК",
+      "address": "Алтайский край, Новоалтайск, Дорожная 74/15",
+      "phone": null,
+      "reason": "incomplete_or_invalid",
+      "existing": null
+    },
+    {
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-97",
+      "name": "Эксклюзив",
+      "address": "Санкт-Петербург, пос. Ленсоветовский, Московское шоссе 231 корп. 5",
+      "phone": "+78123262826",
+      "reason": "same_phone_and_name_review_address",
+      "existing": "directory:research-b48-96"
+    },
+    {
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-98",
+      "name": "Эксклюзив",
+      "address": "Санкт-Петербург, Софийская 127 корп. 6",
+      "phone": "+78123262826",
+      "reason": "same_phone_and_name_review_address",
+      "existing": "directory:research-b48-96"
+    },
+    {
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-111",
+      "name": "Детали Машин",
+      "address": "Тюменская область, Тюмень, Старый Тобольский тракт 2 км, 8 стр. 202",
+      "phone": "+79681712727",
+      "reason": "same_phone_and_name_review_address",
+      "existing": "directory:research-b48-110"
+    }
+  ],
+  "provenance": [
+    {
+      "id": "directory:research-b42-mbk-aksay",
+      "source_file": "sto-tire-and-compass-batch42-2026-11-27.json",
+      "source_id": "b42-mbk-aksay",
+      "name": "Мир больших колёс — Аксай",
+      "address": "Ростовская область, Аксай, ул. Западная, 33",
+      "phone": "+78005554051",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://mbk-global.com/centers/"
+      ],
+      "notes": "Общий телефон и почта сети, не прямой контакт филиала. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b42-mbk-bataysk",
+      "source_file": "sto-tire-and-compass-batch42-2026-11-27.json",
+      "source_id": "b42-mbk-bataysk",
+      "name": "Мир больших колёс — Батайск",
+      "address": "Ростовская область, Батайск, Самарское шоссе, 3Г",
+      "phone": "+78005554051",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://mbk-global.com/centers/"
+      ],
+      "notes": "Общий телефон и почта сети, не прямой контакт филиала. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b42-mbk-shakhty",
+      "source_file": "sto-tire-and-compass-batch42-2026-11-27.json",
+      "source_id": "b42-mbk-shakhty",
+      "name": "Мир больших колёс — Шахты",
+      "address": "Ростовская область, Шахты, ул. Майская, 39Д",
+      "phone": "+78005554051",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://mbk-global.com/centers/"
+      ],
+      "notes": "Общий телефон и почта сети, не прямой контакт филиала. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b42-mbk-volgograd-domostroiteley",
+      "source_file": "sto-tire-and-compass-batch42-2026-11-27.json",
+      "source_id": "b42-mbk-volgograd-domostroiteley",
+      "name": "Мир больших колёс — Волгоград",
+      "address": "Волгоградская область, Волгоград, ул. Домостроителей, 13А",
+      "phone": "+78005554051",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://mbk-global.com/centers/"
+      ],
+      "notes": "Общий телефон и почта сети, не прямой контакт филиала. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b42-mbk-volgograd-dovzhenko",
+      "source_file": "sto-tire-and-compass-batch42-2026-11-27.json",
+      "source_id": "b42-mbk-volgograd-dovzhenko",
+      "name": "Мир больших колёс — Волгоград — Довженко",
+      "address": "Волгоградская область, Волгоград, ул. Довженко, 30",
+      "phone": "+78005554051",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://mbk-global.com/centers/"
+      ],
+      "notes": "Общий телефон и почта сети, не прямой контакт филиала. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b42-mbk-volzhsky",
+      "source_file": "sto-tire-and-compass-batch42-2026-11-27.json",
+      "source_id": "b42-mbk-volzhsky",
+      "name": "Мир больших колёс — Волжский",
+      "address": "Волгоградская область, Волжский, ул. Горького, 102",
+      "phone": "+78005554051",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://mbk-global.com/centers/"
+      ],
+      "notes": "Общий телефон и почта сети, не прямой контакт филиала. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b42-mbk-krasnodar",
+      "source_file": "sto-tire-and-compass-batch42-2026-11-27.json",
+      "source_id": "b42-mbk-krasnodar",
+      "name": "Мир больших колёс — Краснодар",
+      "address": "Краснодарский край, Краснодар, ул. Восточный обход, 14",
+      "phone": "+78005554051",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://mbk-global.com/centers/"
+      ],
+      "notes": "Общий телефон и почта сети, не прямой контакт филиала. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b42-mbk-novotitarovskaya",
+      "source_file": "sto-tire-and-compass-batch42-2026-11-27.json",
+      "source_id": "b42-mbk-novotitarovskaya",
+      "name": "Мир больших колёс — Новотитаровская",
+      "address": "Краснодарский край, ст. Новотитаровская, ул. Крайняя, 2/1",
+      "phone": "+78005554051",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://mbk-global.com/centers/"
+      ],
+      "notes": "Общий телефон и почта сети, не прямой контакт филиала. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b42-mbk-kropotkin",
+      "source_file": "sto-tire-and-compass-batch42-2026-11-27.json",
+      "source_id": "b42-mbk-kropotkin",
+      "name": "Мир больших колёс — Кропоткин",
+      "address": "Краснодарский край, Кропоткин, ул. Загородная, 47",
+      "phone": "+78005554051",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://mbk-global.com/centers/"
+      ],
+      "notes": "Общий телефон и почта сети, не прямой контакт филиала. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b42-mbk-krymsk",
+      "source_file": "sto-tire-and-compass-batch42-2026-11-27.json",
+      "source_id": "b42-mbk-krymsk",
+      "name": "Мир больших колёс — Крымск",
+      "address": "Краснодарский край, Крымск, ул. Торговая, 4",
+      "phone": "+78005554051",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://mbk-global.com/centers/"
+      ],
+      "notes": "Общий телефон и почта сети, не прямой контакт филиала. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b42-mbk-kanevskaya",
+      "source_file": "sto-tire-and-compass-batch42-2026-11-27.json",
+      "source_id": "b42-mbk-kanevskaya",
+      "name": "Мир больших колёс — Каневская",
+      "address": "Краснодарский край, ст. Каневская, ул. Широкая, 236Б",
+      "phone": "+78005554051",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://mbk-global.com/centers/"
+      ],
+      "notes": "Общий телефон и почта сети, не прямой контакт филиала. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b42-mbk-podolsk",
+      "source_file": "sto-tire-and-compass-batch42-2026-11-27.json",
+      "source_id": "b42-mbk-podolsk",
+      "name": "Мир больших колёс — Подольск",
+      "address": "Московская область, г.о. Подольск, д. Стрелково, 33А",
+      "phone": "+78005554051",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://mbk-global.com/centers/"
+      ],
+      "notes": "Общий телефон и почта сети, не прямой контакт филиала. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b42-mbk-khimki",
+      "source_file": "sto-tire-and-compass-batch42-2026-11-27.json",
+      "source_id": "b42-mbk-khimki",
+      "name": "Мир больших колёс — Химки",
+      "address": "Московская область, Химки, мкр. Подрезково, квартал Кирилловка, 55Г",
+      "phone": "+78005554051",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://mbk-global.com/centers/"
+      ],
+      "notes": "Общий телефон и почта сети, не прямой контакт филиала. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b42-mbk-berezovsky",
+      "source_file": "sto-tire-and-compass-batch42-2026-11-27.json",
+      "source_id": "b42-mbk-berezovsky",
+      "name": "Мир больших колёс — Берёзовский",
+      "address": "Свердловская область, Берёзовский, пос. ЦОФ, 12",
+      "phone": "+78005554051",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://mbk-global.com/centers/"
+      ],
+      "notes": "Общий телефон и почта сети, не прямой контакт филиала. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b42-mbk-kochubeevskoe",
+      "source_file": "sto-tire-and-compass-batch42-2026-11-27.json",
+      "source_id": "b42-mbk-kochubeevskoe",
+      "name": "Мир больших колёс — Кочубеевское",
+      "address": "Ставропольский край, с. Кочубеевское, ул. Торговая, 37Б",
+      "phone": "+78005554051",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://mbk-global.com/centers/"
+      ],
+      "notes": "Общий телефон и почта сети, не прямой контакт филиала. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b42-mbk-stavropol",
+      "source_file": "sto-tire-and-compass-batch42-2026-11-27.json",
+      "source_id": "b42-mbk-stavropol",
+      "name": "Мир больших колёс — Верхнерусское",
+      "address": "Ставропольский край, с. Верхнерусское, ул. Батайская, 35",
+      "phone": "+78005554051",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://mbk-global.com/centers/"
+      ],
+      "notes": "Общий телефон и почта сети, не прямой контакт филиала. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b42-mbk-nn",
+      "source_file": "sto-tire-and-compass-batch42-2026-11-27.json",
+      "source_id": "b42-mbk-nn",
+      "name": "Мир больших колёс — Нижний Новгород",
+      "address": "Нижегородская область, Нижний Новгород, ул. Федосеенко, 63Д",
+      "phone": "+78005554051",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://mbk-global.com/centers/"
+      ],
+      "notes": "Общий телефон и почта сети, не прямой контакт филиала. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b42-rostyre-irkutsk",
+      "source_file": "sto-tire-and-compass-batch42-2026-11-27.json",
+      "source_id": "b42-rostyre-irkutsk",
+      "name": "Росшина — Иркутск",
+      "address": "Иркутская область, Иркутск, ул. Набережная Иркута, 1, стр. 5",
+      "phone": "+73952580000",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://rostyre.com/contacts/all_stores/"
+      ],
+      "notes": " Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b42-rostyre-chita",
+      "source_file": "sto-tire-and-compass-batch42-2026-11-27.json",
+      "source_id": "b42-rostyre-chita",
+      "name": "Росшина — Чита",
+      "address": "Забайкальский край, Чита, ул. Недорезова, 1Г",
+      "phone": "+73022245605",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://rostyre.com/contacts/all_stores/"
+      ],
+      "notes": " Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b42-rostyre-kanevskaya",
+      "source_file": "sto-tire-and-compass-batch42-2026-11-27.json",
+      "source_id": "b42-rostyre-kanevskaya",
+      "name": "Росшина — Каневская",
+      "address": "Краснодарский край, ст. Каневская, ул. Широкая, 236А",
+      "phone": "+78612054662",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://rostyre.com/contacts/all_stores/"
+      ],
+      "notes": "Рядом с МБК 236Б, проверить самостоятельность входа. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b42-rostyre-kupavna",
+      "source_file": "sto-tire-and-compass-batch42-2026-11-27.json",
+      "source_id": "b42-rostyre-kupavna",
+      "name": "Росшина — Купавна",
+      "address": "Московская область, Богородский округ, М-7 Волга, 34-й км, 3",
+      "phone": "+79104031616",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://rostyre.com/contacts/all_stores/"
+      ],
+      "notes": " Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b42-rostyre-nn",
+      "source_file": "sto-tire-and-compass-batch42-2026-11-27.json",
+      "source_id": "b42-rostyre-nn",
+      "name": "Росшина — Нижний Новгород",
+      "address": "Нижегородская область, Нижний Новгород, ул. Федосеенко, 54/2, склад 6",
+      "phone": "+78312664164",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://rostyre.com/contacts/all_stores/"
+      ],
+      "notes": " Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b42-rostyre-penza",
+      "source_file": "sto-tire-and-compass-batch42-2026-11-27.json",
+      "source_id": "b42-rostyre-penza",
+      "name": "Росшина — Пенза",
+      "address": "Пензенская область, Пенза, ул. Аустрина, 63, лит. К5",
+      "phone": "+78412234876",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://rostyre.com/contacts/all_stores/"
+      ],
+      "notes": " Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b42-rostyre-ryazan",
+      "source_file": "sto-tire-and-compass-batch42-2026-11-27.json",
+      "source_id": "b42-rostyre-ryazan",
+      "name": "Росшина — Рязань",
+      "address": "Рязанская область, Рязань, Окружная дорога, 197-й км, 1",
+      "phone": "+74912434208",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://rostyre.com/contacts/all_stores/"
+      ],
+      "notes": " Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b42-rostyre-selyatino",
+      "source_file": "sto-tire-and-compass-batch42-2026-11-27.json",
+      "source_id": "b42-rostyre-selyatino",
+      "name": "Росшина — Селятино",
+      "address": "Московская область, Наро-Фоминский округ, пос. Калининец, ул. Фабричная",
+      "phone": "+74994605536",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://rostyre.com/contacts/all_stores/"
+      ],
+      "notes": "Номер здания отсутствует; проверить въезд. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b42-rostyre-ulanude",
+      "source_file": "sto-tire-and-compass-batch42-2026-11-27.json",
+      "source_id": "b42-rostyre-ulanude",
+      "name": "Росшина — Улан-Удэ",
+      "address": "Республика Бурятия, Улан-Удэ, просп. Автомобилистов, 1А",
+      "phone": "+73012707000",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://rostyre.com/contacts/all_stores/"
+      ],
+      "notes": " Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b42-rostyre-petrozavodsk",
+      "source_file": "sto-tire-and-compass-batch42-2026-11-27.json",
+      "source_id": "b42-rostyre-petrozavodsk",
+      "name": "Росшина — Петрозаводск",
+      "address": "Республика Карелия, Петрозаводск, ул. Новосулажгорская, 6",
+      "phone": "+78142670032",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://rostyre.com/contacts/all_stores/"
+      ],
+      "notes": " Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b42-1001-kultury",
+      "source_file": "sto-tire-and-compass-batch42-2026-11-27.json",
+      "source_id": "b42-1001-kultury",
+      "name": "1001 Шина — kultury",
+      "address": "Санкт-Петербург, просп. Культуры, 61",
+      "phone": "+79095890133",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://www.1001shina.ru/uslugi/avtoparkam/"
+      ],
+      "notes": " Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b42-1001-badaevsky",
+      "source_file": "sto-tire-and-compass-batch42-2026-11-27.json",
+      "source_id": "b42-1001-badaevsky",
+      "name": "1001 Шина — badaevsky",
+      "address": "Санкт-Петербург, пос. Шушары, 1-й Бадаевский проезд, 2",
+      "phone": "+79681920936",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://www.1001shina.ru/uslugi/avtoparkam/"
+      ],
+      "notes": " Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b42-autoweb",
+      "source_file": "sto-tire-and-compass-batch42-2026-11-27.json",
+      "source_id": "b42-autoweb",
+      "name": "AutoWeb",
+      "address": "Санкт-Петербург, Таллинское шоссе, 204А",
+      "phone": "+79119249955",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://autowebs.ru/"
+      ],
+      "notes": "График ремонтных работ на сайте указан неодинаково; уточнить. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b42-binar-planar-optikov",
+      "source_file": "sto-tire-and-compass-batch42-2026-11-27.json",
+      "source_id": "b42-binar-planar-optikov",
+      "name": "Установочный центр Бинар/Планар",
+      "address": "Санкт-Петербург, ул. Оптиков, 4, корп. 2",
+      "phone": "+79311092847",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://binar-planar-spb.ru/"
+      ],
+      "notes": "Приём тяжелых ТС и место парковки уточнить. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b42-comp-tfk-kemerovo",
+      "source_file": "sto-tire-and-compass-batch42-2026-11-27.json",
+      "source_id": "b42-comp-tfk-kemerovo",
+      "name": "ТФК КАМАЗ — Кемерово",
+      "address": "Кемеровская область, Кемерово, ул. Терешковой, 76",
+      "phone": "+73842319447",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://compasstrucks.ru/distribution/dealers/"
+      ],
+      "notes": "Среднетоннажный профиль подтвержден перечнем; прием тяжелых тягачей проверить. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b42-comp-yarkamp-kostroma",
+      "source_file": "sto-tire-and-compass-batch42-2026-11-27.json",
+      "source_id": "b42-comp-yarkamp-kostroma",
+      "name": "ЯрКамп-Сервис — Кострома",
+      "address": "Костромская область, Кострома, ул. Московская, 110",
+      "phone": "+74942770880",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://compasstrucks.ru/distribution/dealers/"
+      ],
+      "notes": "Среднетоннажный профиль подтвержден перечнем; прием тяжелых тягачей проверить. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b42-comp-autoreforma",
+      "source_file": "sto-tire-and-compass-batch42-2026-11-27.json",
+      "source_id": "b42-comp-autoreforma",
+      "name": "Автореформа",
+      "address": "Краснодарский край, ст. Старокорсунская, ул. Справная, 5",
+      "phone": "+79186501444",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://compasstrucks.ru/distribution/dealers/"
+      ],
+      "notes": "Среднетоннажный профиль подтвержден перечнем; прием тяжелых тягачей проверить. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b42-comp-techtruck",
+      "source_file": "sto-tire-and-compass-batch42-2026-11-27.json",
+      "source_id": "b42-comp-techtruck",
+      "name": "Тех Трак",
+      "address": "Краснодарский край, Краснодар, ул. Демуса М.Н., 50, пом. 13",
+      "phone": "+79282803477",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://compasstrucks.ru/distribution/dealers/"
+      ],
+      "notes": "Среднетоннажный профиль подтвержден перечнем; прием тяжелых тягачей проверить. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b42-comp-autofurgon-mitino",
+      "source_file": "sto-tire-and-compass-batch42-2026-11-27.json",
+      "source_id": "b42-comp-autofurgon-mitino",
+      "name": "Автофургон — Митино",
+      "address": "Московская область, Красногорский район, коммунальная зона, Пятницкое шоссе, 6-й км, вл. 5, стр. 2",
+      "phone": "+74952301111",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://compasstrucks.ru/distribution/dealers/"
+      ],
+      "notes": "Среднетоннажный профиль подтвержден перечнем; прием тяжелых тягачей проверить. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b42-comp-komavtoservice",
+      "source_file": "sto-tire-and-compass-batch42-2026-11-27.json",
+      "source_id": "b42-comp-komavtoservice",
+      "name": "Комавтосервис",
+      "address": "Москва, Ступинский проезд, 6, стр. 1",
+      "phone": "+74957995111",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://compasstrucks.ru/distribution/dealers/"
+      ],
+      "notes": "Среднетоннажный профиль подтвержден перечнем; прием тяжелых тягачей проверить. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b42-comp-autopriyut-podolsk",
+      "source_file": "sto-tire-and-compass-batch42-2026-11-27.json",
+      "source_id": "b42-comp-autopriyut-podolsk",
+      "name": "АвтоПриют — Подольск",
+      "address": "Московская область, Подольск, мкр. Климовск, ул. Заводская, 2, корп. 38",
+      "phone": "+79257891032",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://compasstrucks.ru/distribution/dealers/"
+      ],
+      "notes": "Среднетоннажный профиль подтвержден перечнем; прием тяжелых тягачей проверить. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b42-comp-autobau-elagino",
+      "source_file": "sto-tire-and-compass-batch42-2026-11-27.json",
+      "source_id": "b42-comp-autobau-elagino",
+      "name": "ТЦ Автобау",
+      "address": "Московская область, Наро-Фоминский район, д. Елагино, ул. Индивидуальная, стр. 3",
+      "phone": "+74995069472",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://compasstrucks.ru/distribution/dealers/"
+      ],
+      "notes": "Среднетоннажный профиль подтвержден перечнем; прием тяжелых тягачей проверить. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b42-comp-tfk-chelny",
+      "source_file": "sto-tire-and-compass-batch42-2026-11-27.json",
+      "source_id": "b42-comp-tfk-chelny",
+      "name": "ТФК КАМАЗ — Набережные Челны",
+      "address": "Республика Татарстан, Набережные Челны, Мензелинский тракт, 20/2",
+      "phone": "+78552919757",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://compasstrucks.ru/distribution/dealers/"
+      ],
+      "notes": "Среднетоннажный профиль подтвержден перечнем; прием тяжелых тягачей проверить. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b42-comp-tfk-nn",
+      "source_file": "sto-tire-and-compass-batch42-2026-11-27.json",
+      "source_id": "b42-comp-tfk-nn",
+      "name": "ТФК КАМАЗ — Нижний Новгород",
+      "address": "Нижегородская область, Нижний Новгород, Московское шоссе, 477, корп. 1",
+      "phone": "+78312999890",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://compasstrucks.ru/distribution/dealers/"
+      ],
+      "notes": "Среднетоннажный профиль подтвержден перечнем; прием тяжелых тягачей проверить. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b42-comp-tsc-nn",
+      "source_file": "sto-tire-and-compass-batch42-2026-11-27.json",
+      "source_id": "b42-comp-tsc-nn",
+      "name": "ТСЦ-НН",
+      "address": "Нижегородская область, Нижний Новгород, ул. Шапошникова, 15Д",
+      "phone": "+78314290092",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://compasstrucks.ru/distribution/dealers/"
+      ],
+      "notes": "Среднетоннажный профиль подтвержден перечнем; прием тяжелых тягачей проверить. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b42-comp-kamazcenter-krasny-mys",
+      "source_file": "sto-tire-and-compass-batch42-2026-11-27.json",
+      "source_id": "b42-comp-kamazcenter-krasny-mys",
+      "name": "КАМАЗ Центр НН — Красный Мыс",
+      "address": "Нижегородская область, Дзержинск, территория Красный Мыс — Гнилицкие Дворики, 1",
+      "phone": "+78312601252",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://compasstrucks.ru/distribution/dealers/"
+      ],
+      "notes": "Среднетоннажный профиль подтвержден перечнем; прием тяжелых тягачей проверить. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b42-comp-autopriyut-samara",
+      "source_file": "sto-tire-and-compass-batch42-2026-11-27.json",
+      "source_id": "b42-comp-autopriyut-samara",
+      "name": "АвтоПриют — Самара",
+      "address": "Самарская область, Самара, ул. Воинская, 11",
+      "phone": "+79295016326",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://compasstrucks.ru/distribution/dealers/"
+      ],
+      "notes": "Среднетоннажный профиль подтвержден перечнем; прием тяжелых тягачей проверить. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b42-comp-autopriyut-stavropol",
+      "source_file": "sto-tire-and-compass-batch42-2026-11-27.json",
+      "source_id": "b42-comp-autopriyut-stavropol",
+      "name": "АвтоПриют — Михайловск",
+      "address": "Ставропольский край, Михайловск, ул. Ленина, 1А/2",
+      "phone": "+79252022369",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://compasstrucks.ru/distribution/dealers/"
+      ],
+      "notes": "Среднетоннажный профиль подтвержден перечнем; прием тяжелых тягачей проверить. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b42-comp-asterion-tyumen",
+      "source_file": "sto-tire-and-compass-batch42-2026-11-27.json",
+      "source_id": "b42-comp-asterion-tyumen",
+      "name": "Астерион",
+      "address": "Тюменская область, Тюмень, ул. Беляева, 35",
+      "phone": "+73452500528",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://compasstrucks.ru/distribution/dealers/"
+      ],
+      "notes": "Среднетоннажный профиль подтвержден перечнем; прием тяжелых тягачей проверить. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b42-comp-serviceauto-ulanude",
+      "source_file": "sto-tire-and-compass-batch42-2026-11-27.json",
+      "source_id": "b42-comp-serviceauto-ulanude",
+      "name": "Сервис-Авто+",
+      "address": "Республика Бурятия, Улан-Удэ, ул. Кабанская, 52",
+      "phone": "+73012372088",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://compasstrucks.ru/distribution/dealers/"
+      ],
+      "notes": "Среднетоннажный профиль подтвержден перечнем; прием тяжелых тягачей проверить. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b42-comp-autocenter21",
+      "source_file": "sto-tire-and-compass-batch42-2026-11-27.json",
+      "source_id": "b42-comp-autocenter21",
+      "name": "Автоцентр 21",
+      "address": "Чувашская Республика, пос. Кугеси, ул. Механизаторов, 13",
+      "phone": "+78352623509",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://compasstrucks.ru/distribution/dealers/"
+      ],
+      "notes": "Среднетоннажный профиль подтвержден перечнем; прием тяжелых тягачей проверить. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b42-comp-importparts-chel",
+      "source_file": "sto-tire-and-compass-batch42-2026-11-27.json",
+      "source_id": "b42-comp-importparts-chel",
+      "name": "Импорт Партс Челябинск",
+      "address": "Челябинская область, Челябинск, Троицкий тракт, 15",
+      "phone": "+73512002210",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://compasstrucks.ru/distribution/dealers/"
+      ],
+      "notes": "Среднетоннажный профиль подтвержден перечнем; прием тяжелых тягачей проверить. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b42-comp-sakhalin-zapchastservice",
+      "source_file": "sto-tire-and-compass-batch42-2026-11-27.json",
+      "source_id": "b42-comp-sakhalin-zapchastservice",
+      "name": "Сахалин-запчастьсервис",
+      "address": "Сахалинская область, Южно-Сахалинск, ул. Шлакоблочная, 37",
+      "phone": "+74242283300",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://compasstrucks.ru/distribution/dealers/"
+      ],
+      "notes": "Среднетоннажный профиль подтвержден перечнем; прием тяжелых тягачей проверить. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b42-comp-yarpart",
+      "source_file": "sto-tire-and-compass-batch42-2026-11-27.json",
+      "source_id": "b42-comp-yarpart",
+      "name": "ЯрПарт",
+      "address": "Ярославская область, пос. Щедрино, ул. Московская, 15",
+      "phone": "+74852672735",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://compasstrucks.ru/distribution/dealers/"
+      ],
+      "notes": "Среднетоннажный профиль подтвержден перечнем; прием тяжелых тягачей проверить. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b42-comp-mbtruck-saratov",
+      "source_file": "sto-tire-and-compass-batch42-2026-11-27.json",
+      "source_id": "b42-comp-mbtruck-saratov",
+      "name": "МБ Трак Саратов",
+      "address": "Саратовская область, с. Сторожевка, ул. Цветочная, 18Б",
+      "phone": "+78452939999",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://compasstrucks.ru/distribution/dealers/"
+      ],
+      "notes": "Среднетоннажный профиль подтвержден перечнем; прием тяжелых тягачей проверить. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b43-autorosta-lipetsk",
+      "source_file": "sto-and-truck-wash-batch43-2026-11-27.json",
+      "source_id": "b43-autorosta-lipetsk",
+      "name": "Автороста — Липецк",
+      "address": "Липецкая область, Липецк, Промышленный проезд, стр. 4, корп. 5",
+      "phone": "+79191670101",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://autorosta.ru/"
+      ],
+      "notes": "Сведения опубликованы источником; прием фур, фактическая деятельность, координаты и право публикации требуют проверки.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b43-autorosta-vygonichi",
+      "source_file": "sto-and-truck-wash-batch43-2026-11-27.json",
+      "source_id": "b43-autorosta-vygonichi",
+      "name": "Автороста — Выгоничи",
+      "address": "Брянская область, пос. Выгоничи, ул. Новобрянская, 9",
+      "phone": "+79200980525",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://autorosta.ru/"
+      ],
+      "notes": "Сведения опубликованы источником; прием фур, фактическая деятельность, координаты и право публикации требуют проверки.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b43-autorosta-ramon",
+      "source_file": "sto-and-truck-wash-batch43-2026-11-27.json",
+      "source_id": "b43-autorosta-ramon",
+      "name": "Автороста — М4",
+      "address": "Воронежская область, Рамонский район, М-4 Дон, 486-й км, за АЗС Дон",
+      "phone": "+79532869944",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://autorosta.ru/"
+      ],
+      "notes": "Сведения опубликованы источником; прием фур, фактическая деятельность, координаты и право публикации требуют проверки.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b43-moika24-mkad16",
+      "source_file": "sto-and-truck-wash-batch43-2026-11-27.json",
+      "source_id": "b43-moika24-mkad16",
+      "name": "Мойка 24",
+      "address": "Москва, МКАД, 16-й км, внешняя сторона",
+      "phone": "+74955324731",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://moika24.online/"
+      ],
+      "notes": "Сведения опубликованы источником; прием фур, фактическая деятельность, координаты и право публикации требуют проверки.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b43-tehmoika-gruzovoy",
+      "source_file": "sto-and-truck-wash-batch43-2026-11-27.json",
+      "source_id": "b43-tehmoika-gruzovoy",
+      "name": "Техмойка",
+      "address": "Санкт-Петербург, Грузовой проезд, 13М",
+      "phone": "+78124071090",
+      "evidence": "directory_only",
+      "source_urls": [
+        "https://spb.spravker.ru/gruzovye-avtomoiki/"
+      ],
+      "notes": "Сведения опубликованы источником; прием фур, фактическая деятельность, координаты и право публикации требуют проверки.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b43-parcentr-elizarova",
+      "source_file": "sto-and-truck-wash-batch43-2026-11-27.json",
+      "source_id": "b43-parcentr-elizarova",
+      "name": "Parcentr",
+      "address": "Санкт-Петербург, просп. Елизарова, 34Б",
+      "phone": "+78129484748",
+      "evidence": "directory_only",
+      "source_urls": [
+        "https://spb.spravker.ru/gruzovye-avtomoiki/"
+      ],
+      "notes": "Сведения опубликованы источником; прием фур, фактическая деятельность, координаты и право публикации требуют проверки.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b43-stobalt-chugunnaya",
+      "source_file": "sto-and-truck-wash-batch43-2026-11-27.json",
+      "source_id": "b43-stobalt-chugunnaya",
+      "name": "Стобалт",
+      "address": "Санкт-Петербург, Чугунная ул., 20АБ",
+      "phone": "+78129470964",
+      "evidence": "directory_only",
+      "source_urls": [
+        "https://spb.spravker.ru/gruzovye-avtomoiki/"
+      ],
+      "notes": "Сведения опубликованы источником; прием фур, фактическая деятельность, координаты и право публикации требуют проверки.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b43-chisty-element",
+      "source_file": "sto-and-truck-wash-batch43-2026-11-27.json",
+      "source_id": "b43-chisty-element",
+      "name": "Чистый Элемент",
+      "address": "Санкт-Петербург, Краснопутиловская ул., 65",
+      "phone": "+79117272719",
+      "evidence": "directory_only",
+      "source_urls": [
+        "https://spb.spravker.ru/gruzovye-avtomoiki/"
+      ],
+      "notes": "Сведения опубликованы источником; прием фур, фактическая деятельность, координаты и право публикации требуют проверки.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b43-element-avtovskaya",
+      "source_file": "sto-and-truck-wash-batch43-2026-11-27.json",
+      "source_id": "b43-element-avtovskaya",
+      "name": "Автоцентр-Элемент",
+      "address": "Санкт-Петербург, Автовская ул., 35А",
+      "phone": "+78129281880",
+      "evidence": "directory_only",
+      "source_urls": [
+        "https://spb.spravker.ru/gruzovye-avtomoiki/"
+      ],
+      "notes": "Сведения опубликованы источником; прием фур, фактическая деятельность, координаты и право публикации требуют проверки.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b43-atlant-gatchina",
+      "source_file": "sto-and-truck-wash-batch43-2026-11-27.json",
+      "source_id": "b43-atlant-gatchina",
+      "name": "Атлант-Авто",
+      "address": "Ленинградская область, Гатчина, Киевская ул., 17Б",
+      "phone": "+79219397018",
+      "evidence": "directory_only",
+      "source_urls": [
+        "https://gatchina.spravker.ru/gruzovye-avtomoiki/"
+      ],
+      "notes": "Сведения опубликованы источником; прием фур, фактическая деятельность, координаты и право публикации требуют проверки.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b43-avtoreanimacia",
+      "source_file": "sto-and-truck-wash-batch43-2026-11-27.json",
+      "source_id": "b43-avtoreanimacia",
+      "name": "Автореанимация",
+      "address": "Санкт-Петербург, ул. Бехтерева, 2",
+      "phone": "+79062701517",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://avtoreanimacia.ru/"
+      ],
+      "notes": "Сведения опубликованы источником; прием фур, фактическая деятельность, координаты и право публикации требуют проверки.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b43-izhora",
+      "source_file": "sto-and-truck-wash-batch43-2026-11-27.json",
+      "source_id": "b43-izhora",
+      "name": "Ижора-автосервис",
+      "address": "Ленинградская область, Ям-Ижора, Ленинградская ул., 9В",
+      "phone": "+79313482067",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://remontsto.ru/"
+      ],
+      "notes": "Сведения опубликованы источником; прием фур, фактическая деятельность, координаты и право публикации требуют проверки.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b43-autopiramida",
+      "source_file": "sto-and-truck-wash-batch43-2026-11-27.json",
+      "source_id": "b43-autopiramida",
+      "name": "Автопирамида",
+      "address": "Ленинградская область, Ям-Ижора, Ленинградская ул., 53А",
+      "phone": "+79626956792",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://autopiramida.ru/"
+      ],
+      "notes": "Сведения опубликованы источником; прием фур, фактическая деятельность, координаты и право публикации требуют проверки.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b43-belauto",
+      "source_file": "sto-and-truck-wash-batch43-2026-11-27.json",
+      "source_id": "b43-belauto",
+      "name": "БелАвто",
+      "address": "Новгородская область, Великий Новгород, проезд Энергетиков, 6, корп. 2, стр. 5",
+      "phone": "+78162607060",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://belauto.ru/contacts/"
+      ],
+      "notes": "Сведения опубликованы источником; прием фур, фактическая деятельность, координаты и право публикации требуют проверки.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b43-mv-avto",
+      "source_file": "sto-and-truck-wash-batch43-2026-11-27.json",
+      "source_id": "b43-mv-avto",
+      "name": "МВ-Авто",
+      "address": "Новгородская область, Великий Новгород, ул. Рабочая, 34/6",
+      "phone": "+79116001628",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://mv-avto.com/"
+      ],
+      "notes": "Сведения опубликованы источником; прием фур, фактическая деятельность, координаты и право публикации требуют проверки.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b43-novgruzservice",
+      "source_file": "sto-and-truck-wash-batch43-2026-11-27.json",
+      "source_id": "b43-novgruzservice",
+      "name": "Новгрузсервис",
+      "address": "Новгородская область, Великий Новгород, Рабочая ул., 57, корп. 1",
+      "phone": "+79602086300",
+      "evidence": "directory_only",
+      "source_urls": [
+        "https://nov.auto2.info/velikiy-novgorod/novgruzservis-570662/"
+      ],
+      "notes": "Сведения опубликованы источником; прием фур, фактическая деятельность, координаты и право публикации требуют проверки.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b44-maks-utkina-zavod",
+      "source_file": "sto-wash-spb-m10-batch44-2026-11-27.json",
+      "source_id": "b44-maks-utkina-zavod",
+      "name": "Макс",
+      "address": "Ленинградская область, Свердловское городское поселение, промзона Уткина Заводь, 1А",
+      "phone": "+79219003373",
+      "evidence": "directory_only",
+      "source_urls": [
+        "https://spb.auto2.info/sankt-peterburg/maks-179888/"
+      ],
+      "notes": "Дополнительный источник https://vyvoz.org/sankt-peterburg/14636-avtomoyka-maks.html; проверить актуальный адрес и номер. Не считать универсальным ремонтом.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b44-clean-fresh-pargolovo",
+      "source_file": "sto-wash-spb-m10-batch44-2026-11-27.json",
+      "source_id": "b44-clean-fresh-pargolovo",
+      "name": "Clean&Fresh",
+      "address": "Санкт-Петербург, Парголово, Ленинградская ул., 99, лит. Б",
+      "phone": "+79325052506",
+      "evidence": "directory_only",
+      "source_urls": [
+        "https://spb.spravker.ru/gruzovye-avtomoiki/"
+      ],
+      "notes": "В источнике услуга мойки грузового эвакуатора; прием длинных автопоездов и габариты не подтверждены. Доп. +7 812 942-87-07.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b44-balkansky-wash",
+      "source_file": "sto-wash-spb-m10-batch44-2026-11-27.json",
+      "source_id": "b44-balkansky-wash",
+      "name": "Автоцентр Балканский",
+      "address": "Санкт-Петербург, Малая Балканская ул., 59, корп. 1",
+      "phone": "+78127015401",
+      "evidence": "directory_only",
+      "source_urls": [
+        "https://spb.spravker.ru/gruzovye-avtomoiki/"
+      ],
+      "notes": "Проверить возможность приема тягачей и автопоездов. Доп. +7 952 205-44-44.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b44-h2o-profi-kommuny",
+      "source_file": "sto-wash-spb-m10-batch44-2026-11-27.json",
+      "source_id": "b44-h2o-profi-kommuny",
+      "name": "H2O Profi",
+      "address": "Санкт-Петербург, ул. Коммуны, 14",
+      "phone": "+79013154643",
+      "evidence": "directory_only",
+      "source_urls": [
+        "https://spb.spravker.ru/gruzovye-avtomoiki/"
+      ],
+      "notes": "Прием тяжелых тягачей не подтвержден; до подтверждения не публиковать.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b44-dln-truck-bolshaya-izhora",
+      "source_file": "sto-wash-spb-m10-batch44-2026-11-27.json",
+      "source_id": "b44-dln-truck-bolshaya-izhora",
+      "name": "ДЛН Трак Сервис",
+      "address": "Ленинградская область, Большая Ижора, Приморское шоссе, 53, лит. А",
+      "phone": "+78002226685",
+      "evidence": "directory_only",
+      "source_urls": [
+        "https://totadres.ru/leningradskaya_oblast/org/dln-logistik/482366"
+      ],
+      "notes": "Одна многопрофильная площадка. ИНН 4725008283 по стороннему справочнику https://fbc.ru/inn/4725008283/ ; ФНС не проверена.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b44-planeta-sto62-biryulino",
+      "source_file": "sto-wash-spb-m10-batch44-2026-11-27.json",
+      "source_id": "b44-planeta-sto62-biryulino",
+      "name": "Планета СТО62",
+      "address": "Тверская область, д. Бирюлино, стр. 1, трасса М-10, 162 км + 800 м",
+      "phone": "+79190501482",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://planetasto62.ru/gruzovaia_moika_avtomobiliei"
+      ],
+      "notes": "Телефон мойки +7 910 649-01-00; график мойки ежедневно 08:00–22:00, общий график ремонта не установлен.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b45-akvaprofi",
+      "source_file": "sto-wash-northwest-batch45-2026-11-27.json",
+      "source_id": "b45-akvaprofi",
+      "name": "АкваПрофи",
+      "address": "Вологодская область, Вологда, ул. Северная, 27",
+      "phone": "+78172709079",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://www.avtomoika35.ru/"
+      ],
+      "notes": "Сайт заявляет прием техники до 40 т, корпоративные договоры; не подтверждает ставку НДС.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b45-grigoryevskaya",
+      "source_file": "sto-wash-northwest-batch45-2026-11-27.json",
+      "source_id": "b45-grigoryevskaya",
+      "name": "Грузовая автомойка",
+      "address": "Вологодская область, Вологда, Григорьевская ул., 1",
+      "phone": "+79115012540",
+      "evidence": "business_directory",
+      "source_urls": [
+        "https://yandex.com/maps/org/gruzovaya_avtomoyka_truck/190409257155/"
+      ],
+      "notes": "График не перенесен из текущего статуса карты.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b45-mg-tver",
+      "source_file": "sto-wash-northwest-batch45-2026-11-27.json",
+      "source_id": "b45-mg-tver",
+      "name": "Грузовая и легковая автомойка MG",
+      "address": "Тверская область, Тверь, ул. Паши Савельевой, 41А",
+      "phone": "+79040249692",
+      "evidence": "directory_only",
+      "source_urls": [
+        "https://tver.2rus.org/moyka_avto/"
+      ],
+      "notes": "Соседний адрес 41 у ТКС и КАМАЗ центра; проверить отдельный въезд.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b45-furamoyka-durykino",
+      "source_file": "sto-wash-northwest-batch45-2026-11-27.json",
+      "source_id": "b45-furamoyka-durykino",
+      "name": "Фурамойка",
+      "address": "Московская область, д. Дурыкино, стр. 12",
+      "phone": "+79891545633",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://furamoyka.ru/"
+      ],
+      "notes": "На сайте заявлена охраняемая стоянка, не считать ремонтной услугой.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b45-vodomoy-novy-byt",
+      "source_file": "sto-wash-northwest-batch45-2026-11-27.json",
+      "source_id": "b45-vodomoy-novy-byt",
+      "name": "Водомой-Авто",
+      "address": "Московская область, Чеховский округ, с. Новый Быт, территория Коммунальная, стр. 10",
+      "phone": "+79262563020",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://vodomoy-avto.ru/contacts"
+      ],
+      "notes": "Второй телефон +7 926 417-45-91; разрешенные типы грузов и виды санитарной обработки уточнить.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b45-akvaavto-stroitel",
+      "source_file": "sto-wash-northwest-batch45-2026-11-27.json",
+      "source_id": "b45-akvaavto-stroitel",
+      "name": "Аква-авто",
+      "address": "Белгородская область, Строитель, ул. Дорожная, 4",
+      "phone": "+79103205021",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://akvaavto.ru/"
+      ],
+      "notes": "Работа с юридическими лицами заявлена; ставка НДС неизвестна. Не считать универсальным ремонтом.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b45-negarazh-lesnoy",
+      "source_file": "sto-wash-northwest-batch45-2026-11-27.json",
+      "source_id": "b45-negarazh-lesnoy",
+      "name": "Негараж",
+      "address": "Московская область, пгт Лесной, ул. Советская, 15",
+      "phone": "+79339073094",
+      "evidence": "business_profile",
+      "source_urls": [
+        "https://negarazh-avtoservis.clients.site/service/gruzovaya-avtomoika/TYCOON_67272617021"
+      ],
+      "notes": "ИНН 5038010381 указан владельцем страницы; тяжелый ремонт не подтвержден. Только сегодняшний график указан, не экстраполировать.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b45-porohovye-tikhvin",
+      "source_file": "sto-wash-northwest-batch45-2026-11-27.json",
+      "source_id": "b45-porohovye-tikhvin",
+      "name": "АвтоСервис на Пороховых",
+      "address": "Ленинградская область, Тихвин, ул. Пороховые, 7",
+      "phone": "+79213336268",
+      "evidence": "directory_only",
+      "source_urls": [
+        "https://tikhvin.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Тяжелый профиль уточнить; дополнительно https://tihvin.jsprav.ru/remont-pritsepov-i-polupritsepov/",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b45-arsenal-tikhvin",
+      "source_file": "sto-wash-northwest-batch45-2026-11-27.json",
+      "source_id": "b45-arsenal-tikhvin",
+      "name": "Арсенал Авто",
+      "address": "Ленинградская область, Тихвин, Мебельная ул., 1А",
+      "phone": "+78136751080",
+      "evidence": "directory_only",
+      "source_urls": [
+        "https://tikhvin.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Прием тяжелых тягачей уточнить.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b45-formula24-tikhvin",
+      "source_file": "sto-wash-northwest-batch45-2026-11-27.json",
+      "source_id": "b45-formula24-tikhvin",
+      "name": "Формула 24",
+      "address": "Ленинградская область, Тихвин, Школьная ул., 6А",
+      "phone": "+79522190284",
+      "evidence": "directory_only",
+      "source_urls": [
+        "https://tikhvin.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Соседний адрес 6; проверить отдельность и грузовой профиль.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b45-reliable-bor",
+      "source_file": "sto-wash-northwest-batch45-2026-11-27.json",
+      "source_id": "b45-reliable-bor",
+      "name": "Reliable repair",
+      "address": "Ленинградская область, д. Бор, 14",
+      "phone": "+79316220563",
+      "evidence": "directory_only",
+      "source_urls": [
+        "https://tikhvin.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Точный муниципалитет, въезд и тяжелый профиль уточнить.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b45-remzona-vyborg",
+      "source_file": "sto-wash-northwest-batch45-2026-11-27.json",
+      "source_id": "b45-remzona-vyborg",
+      "name": "RemZona",
+      "address": "Ленинградская область, Выборг, ул. Данилова, 19",
+      "phone": "+79218593004",
+      "evidence": "directory_only",
+      "source_urls": [
+        "https://vyborg.spravker.ru/diagnostika-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Проверить тяжелый профиль.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b45-lion-cherkasovo",
+      "source_file": "sto-wash-northwest-batch45-2026-11-27.json",
+      "source_id": "b45-lion-cherkasovo",
+      "name": "Лион",
+      "address": "Ленинградская область, пос. Черкасово, Верхне-Черкасовская ул.",
+      "phone": "+79218783314",
+      "evidence": "directory_only",
+      "source_urls": [
+        "https://vyborg.spravker.ru/diagnostika-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Точный номер здания и обслуживание сторонних машин уточнить; перевозчик и сервис могут быть одним оператором.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b46-parnas-gmk",
+      "source_file": "sto-wash-northwest-yaroslavl-batch46-2026-11-27.json",
+      "source_id": "b46-parnas-gmk",
+      "name": "Парнас — грузовой моечный комплекс",
+      "address": "Санкт-Петербург, просп. Культуры, 42, лит. Е",
+      "phone": "+79312019001",
+      "evidence": "directory_only",
+      "source_urls": [
+        "https://2sp.me/ru/sankt-peterburg_1657688494/company/xxl-gruzovaya-avtomoyka"
+      ],
+      "notes": "Справочник указывает gmk24.ru; проверить действующего оператора и высоту ворот.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b46-vostok-koltushi",
+      "source_file": "sto-wash-northwest-yaroslavl-batch46-2026-11-27.json",
+      "source_id": "b46-vostok-koltushi",
+      "name": "Восток сервис",
+      "address": "Ленинградская область, Колтуши, Колтушское шоссе, 125А",
+      "phone": "+79045576993",
+      "evidence": "directory_only",
+      "source_urls": [
+        "https://totadres.ru/koltushi/org/vostok_servis/5107751"
+      ],
+      "notes": "Дополнительный телефон +7 981 912-98-58. Шиномонтаж по тому же адресу не считать отдельным без проверки.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b46-a-group-devyatkino",
+      "source_file": "sto-wash-northwest-yaroslavl-batch46-2026-11-27.json",
+      "source_id": "b46-a-group-devyatkino",
+      "name": "A-group",
+      "address": "Ленинградская область, д. Новое Девяткино, Главная ул., 101",
+      "phone": "+79219542232",
+      "evidence": "directory_only",
+      "source_urls": [
+        "https://totadres.ru/leningradskaya_oblast/org/a-group/5156078"
+      ],
+      "notes": "Точный перечень услуг и тяжелый профиль не подтверждены.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b46-sto-pesochnaya4",
+      "source_file": "sto-wash-northwest-yaroslavl-batch46-2026-11-27.json",
+      "source_id": "b46-sto-pesochnaya4",
+      "name": "СТО — Песочная",
+      "address": "Ленинградская область, Приозерск, Песочная ул., 4",
+      "phone": "+79533437713",
+      "evidence": "directory_only",
+      "source_urls": [
+        "https://priozersk.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Мойка указана, грузовой профиль мойки не подтвержден.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b46-genstar-larionovo",
+      "source_file": "sto-wash-northwest-yaroslavl-batch46-2026-11-27.json",
+      "source_id": "b46-genstar-larionovo",
+      "name": "Генстар",
+      "address": "Ленинградская область, пос. Ларионово, Школьная ул., 1Б",
+      "phone": "+79213429974",
+      "evidence": "directory_only",
+      "source_urls": [
+        "https://priozersk.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Уточнить типы обслуживаемых ТС.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b46-sto-rus-priozersk",
+      "source_file": "sto-wash-northwest-yaroslavl-batch46-2026-11-27.json",
+      "source_id": "b46-sto-rus-priozersk",
+      "name": "СТО-Русь",
+      "address": "Ленинградская область, Приозерск, Песочная ул., 16",
+      "phone": "+79219920405",
+      "evidence": "directory_only",
+      "source_urls": [
+        "https://priozersk.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Дублирующая карточка шиномонтажа по тому же адресу не добавлена.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b46-wash-pozharskogo",
+      "source_file": "sto-wash-northwest-yaroslavl-batch46-2026-11-27.json",
+      "source_id": "b46-wash-pozharskogo",
+      "name": "Грузовая мойка и шиномонтаж",
+      "address": "Ярославская область, Ярославль, ул. Пожарского, 68",
+      "phone": "+74852586767",
+      "evidence": "directory_only",
+      "source_urls": [
+        "https://yar.auto2.info/yaroslavl/gruzovaya-moyka-510887/",
+        "https://yar.spravker.ru/gruzovye-avtomoiki/"
+      ],
+      "notes": "Второй телефон +7 910 973-80-11. Графики в справочниках различаются, проверить. Координаты источника 57.5626, 39.8983.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b46-formula-yar",
+      "source_file": "sto-wash-northwest-yaroslavl-batch46-2026-11-27.json",
+      "source_id": "b46-formula-yar",
+      "name": "Формула",
+      "address": "Ярославская область, Ярославль, Базовая ул., 3",
+      "phone": "+74852200101",
+      "evidence": "directory_only",
+      "source_urls": [
+        "https://yar.spravker.ru/gruzovye-avtomoiki/"
+      ],
+      "notes": "Габариты и прием автопоездов уточнить. Доп. +7 4852 69-57-96.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b46-amg-yar",
+      "source_file": "sto-wash-northwest-yaroslavl-batch46-2026-11-27.json",
+      "source_id": "b46-amg-yar",
+      "name": "АМГ-Сервис",
+      "address": "Ярославская область, Ярославль, ул. Нефтяников, 11Б",
+      "phone": "+79605342959",
+      "evidence": "directory_only",
+      "source_urls": [
+        "https://yar.spravker.ru/gruzovye-avtomoiki/"
+      ],
+      "notes": "Уточнить габариты и оператора.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b46-truckbus-nagorny",
+      "source_file": "sto-wash-northwest-yaroslavl-batch46-2026-11-27.json",
+      "source_id": "b46-truckbus-nagorny",
+      "name": "Truck&BusService",
+      "address": "Ярославская область, пос. Нагорный, Дорожная ул., 10",
+      "phone": "+79301222202",
+      "evidence": "directory_only",
+      "source_urls": [
+        "https://yar.spravker.ru/gruzovye-avtomoiki/",
+        "https://www.truckandbusservice.ru/wash/"
+      ],
+      "notes": "Сайт https://www.truckandbusservice.ru/wash/ в поисковой выдаче заявляет мойку автопоездов и телефон +7 902 333-29-49, страница не открылась полностью; сверить адрес, телефон и отдельный график мойки.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b47-hom-maly-lutsk",
+      "source_file": "sto-wash-federal-batch47-2026-11-27.json",
+      "source_id": "b47-hom-maly-lutsk",
+      "name": "Hom Service",
+      "address": "Ленинградская область, Кингисеппский район, д. Малый Луцк",
+      "phone": "+79650012015",
+      "evidence": "directory_only",
+      "source_urls": [
+        "https://spb.spravker.ru/gorod-kingisepp/remont-pritsepov/"
+      ],
+      "notes": "Уточнить номер здания и фактический въезд.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b47-garazh47",
+      "source_file": "sto-wash-federal-batch47-2026-11-27.json",
+      "source_id": "b47-garazh47",
+      "name": "Гараж47 / Монолит-Проф",
+      "address": "Ленинградская область, Кингисепп, 2-й проезд, 2Г, стр. 1",
+      "phone": "+79531515189",
+      "evidence": "directory_only",
+      "source_urls": [
+        "https://spb.spravker.ru/gorod-kingisepp/remont-pritsepov/"
+      ],
+      "notes": "Один адрес и общий телефон, не две точки. Второй номер +7 981 809-30-01; графики расходятся (09–21 и 24/7), уточнить.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b47-poligon-kaskolovka",
+      "source_file": "sto-wash-federal-batch47-2026-11-27.json",
+      "source_id": "b47-poligon-kaskolovka",
+      "name": "Полигон",
+      "address": "Ленинградская область, Кингисепп, пос. Касколовка",
+      "phone": "+79626809989",
+      "evidence": "directory_only",
+      "source_urls": [
+        "https://spb.spravker.ru/gorod-kingisepp/remont-pritsepov/"
+      ],
+      "notes": "Точный въезд уточнить.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b47-eurotransauto-fosforit",
+      "source_file": "sto-wash-federal-batch47-2026-11-27.json",
+      "source_id": "b47-eurotransauto-fosforit",
+      "name": "Евротрансавто",
+      "address": "Ленинградская область, Кингисеппский район, промзона Фосфорит, Индустриальный проезд, 5",
+      "phone": "+79111392555",
+      "evidence": "directory_only",
+      "source_urls": [
+        "https://spb.spravker.ru/gorod-kingisepp/avtoservisy-avtotehcentry/"
+      ],
+      "notes": "Грузовой профиль указан дополнительно в https://kingisepp.jsprav.ru/tsentryi-po-remontu-gruzovyih-avtomobilej/",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b47-gruzmoyka-vavilova",
+      "source_file": "sto-wash-federal-batch47-2026-11-27.json",
+      "source_id": "b47-gruzmoyka-vavilova",
+      "name": "Грузовая мойка АТП-3 Транссервис",
+      "address": "Ростовская область, Ростов-на-Дону, ул. Вавилова, 58",
+      "phone": "+79282792827",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://gruzmoyka.ru/"
+      ],
+      "notes": "После 19:00 предварительная запись по телефону обязательна согласно сайту.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b47-tehmoika-pavlovsky",
+      "source_file": "sto-wash-federal-batch47-2026-11-27.json",
+      "source_id": "b47-tehmoika-pavlovsky",
+      "name": "Техмойка — Павловский Посад",
+      "address": "Московская область, Павловский Посад, Корнево-Юдинский пер., 2, корп. 3",
+      "phone": "+74994902917",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://msk.tehmoika.com/"
+      ],
+      "notes": "Ремонт танк-контейнера не равнозначен ремонту полуприцепа.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b47-proficlean-m7",
+      "source_file": "sto-wash-federal-batch47-2026-11-27.json",
+      "source_id": "b47-proficlean-m7",
+      "name": "Proficlean",
+      "address": "Республика Татарстан, М-7, 774-й км, 2, Казань",
+      "phone": "+79872368426",
+      "evidence": "directory_only",
+      "source_urls": [
+        "https://mestam.info/ru/kazan/mesto/6716874-proficlean-m7-774-kilometr-2"
+      ],
+      "notes": "Второй телефон +7 987 215-04-00; странный график в справочнике, уточнить.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b47-wash-polevoy",
+      "source_file": "sto-wash-federal-batch47-2026-11-27.json",
+      "source_id": "b47-wash-polevoy",
+      "name": "Мойка — Полевой переулок",
+      "address": "Новгородская область, Великий Новгород, Полевой пер., 2В",
+      "phone": "+79506881162",
+      "evidence": "directory_only",
+      "source_urls": [
+        "https://vnovgorod.spravker.ru/avtomaticheskie-moiki/"
+      ],
+      "notes": "Проверить высоту ворот и прием тяжелых фур.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b47-truckpoint-m4",
+      "source_file": "sto-wash-federal-batch47-2026-11-27.json",
+      "source_id": "b47-truckpoint-m4",
+      "name": "Truck point",
+      "address": "Краснодарский край, Краснодар, М-4, 1308-й км, 3",
+      "phone": "+79180604707",
+      "evidence": "directory_only",
+      "source_urls": [
+        "https://totadres.ru/krasnodar/org/truck_point/4521354"
+      ],
+      "notes": "На том же адресе Пин-Авто; проверить оператор и самостоятельность площадки.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b47-alex-auto-artelnaya",
+      "source_file": "sto-wash-federal-batch47-2026-11-27.json",
+      "source_id": "b47-alex-auto-artelnaya",
+      "name": "Алекс-Авто — грузовая мойка",
+      "address": "Нижегородская область, Нижний Новгород, ул. Артельная, 19А",
+      "phone": "+78314151850",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://alexavtonn.ru/service/car-wash/washing-truck/"
+      ],
+      "notes": "Высота ворот 4 м, длина поста 15 м. Грузовой ремонт тяжелых тягачей не подтвержден; ограничения полной сцепки уточнить.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-1",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-1",
+      "name": "Архмотордеталь-Сервис",
+      "address": "Архангельская область, Архангельск, Мостовая 16 корп. 2",
+      "phone": "+78182400034",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://uralaz.ru/dealers/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-3",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-3",
+      "name": "Волготехснаб-Каспий",
+      "address": "Астраханская область, Астрахань, Фунтовское шоссе 9Б",
+      "phone": "+78512213000",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://uralaz.ru/dealers/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-4",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-4",
+      "name": "Зубр",
+      "address": "Волгоградская область, Волгоград, Краснополянская 23",
+      "phone": "+78442544322",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://uralaz.ru/dealers/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-5",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-5",
+      "name": "Агромашсервис",
+      "address": "Брянская область, пос. Супонево, Ленина 131Б",
+      "phone": "+74832300032",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://uralaz.ru/dealers/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-6",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-6",
+      "name": "Ремтрансстрой",
+      "address": "Рязанская область, Рязань, станция Лесок 25",
+      "phone": "+74912777123",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://uralaz.ru/dealers/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-7",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-7",
+      "name": "Волгакамазавтосервис",
+      "address": "Волгоградская область, Волгоград, Моторная 40",
+      "phone": "+78442430055",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://uralaz.ru/dealers/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-8",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-8",
+      "name": "ЯрКамп-Сервис",
+      "address": "Ярославская область, пос. Щедрино, Московская 6А",
+      "phone": "+74852607007",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://uralaz.ru/dealers/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-9",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-9",
+      "name": "АвтоРегион ДВ",
+      "address": "Хабаровский край, Хабаровск, Республиканская 25",
+      "phone": "+74212543080",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://uralaz.ru/dealers/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-10",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-10",
+      "name": "ЦентрТракСервис",
+      "address": "Ивановская область, Иваново, 13-я Березниковская 1А",
+      "phone": "+74932234491",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://uralaz.ru/dealers/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-12",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-12",
+      "name": "ДСТ-Иркутск",
+      "address": "Иркутская область, Иркутск, Тухачевского 3/7",
+      "phone": "+73952740057",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://uralaz.ru/dealers/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-13",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-13",
+      "name": "Байкал-АвтоТрак-Сервис",
+      "address": "Иркутская область, Иркутск, Блюхера 12А",
+      "phone": "+79025159483",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://uralaz.ru/dealers/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-14",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-14",
+      "name": "БазисТрак",
+      "address": "Кемеровская область, Кемерово, 2-я Малоплановая 18",
+      "phone": "+79134226565",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://uralaz.ru/dealers/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-15",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-15",
+      "name": "Грузовой технический центр",
+      "address": "Краснодарский край, Сочи, Виноградный переулок 32",
+      "phone": "+78622901222",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://uralaz.ru/dealers/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-16",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-16",
+      "name": "Дизель-Сервис",
+      "address": "Краснодарский край, Краснодар, им. Демуса М.Н. 9/5",
+      "phone": "+79184411003",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://uralaz.ru/dealers/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-17",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-17",
+      "name": "Альянссервис",
+      "address": "Красноярский край, пос. Солонцы, Центральная промзона, стр. 2",
+      "phone": "+79232934329",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://uralaz.ru/dealers/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-18",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-18",
+      "name": "Карьерные машины",
+      "address": "Красноярский край, Красноярск, Затонская 62",
+      "phone": "+73912906261",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://uralaz.ru/dealers/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-19",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-19",
+      "name": "БелМТЗцентр",
+      "address": "Липецкая область, Липецк, Юношеская 57А",
+      "phone": "+74742288755",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://uralaz.ru/dealers/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-20",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-20",
+      "name": "АГАТ",
+      "address": "Московская область, Мытищи, Академика Каргина 35А",
+      "phone": "+79150448336",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://uralaz.ru/dealers/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-21",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-21",
+      "name": "МВ-Партс",
+      "address": "Москва, Войкова 6 стр. 19",
+      "phone": "+74955026576",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://uralaz.ru/dealers/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-22",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-22",
+      "name": "Техсервис-Якутия",
+      "address": "Республика Саха (Якутия), Нерюнгри, Аммосова 16",
+      "phone": "+74114742369",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://uralaz.ru/dealers/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-24",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-24",
+      "name": "СибТехно-Сервис",
+      "address": "Красноярский край, Красноярск, Спандаряна 1",
+      "phone": "+73912682016",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://uralaz.ru/dealers/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-25",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-25",
+      "name": "С-АВТО",
+      "address": "Саратовская область, Саратов, пос. Зоринский, Промузел Зоринский-2, зд. 29 стр. 1",
+      "phone": "+78452448888",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://uralaz.ru/dealers/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-26",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-26",
+      "name": "ГлобалЛогистикСервис",
+      "address": "Самарская область, пгт. Новосемейкино, Солнечная 3Ф-1",
+      "phone": "+78462229428",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://uralaz.ru/dealers/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-27",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-27",
+      "name": "Техсервис-Хабаровск",
+      "address": "Хабаровский край, Хабаровск, Камышовый переулок 15",
+      "phone": "+74212789545",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://uralaz.ru/dealers/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-29",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-29",
+      "name": "Савельев В.В. — сервис",
+      "address": "Ханты-Мансийский автономный округ — Югра, Нижневартовск, 2ПС 8 стр. 39",
+      "phone": "+79028580100",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://uralaz.ru/dealers/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-30",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-30",
+      "name": "Рубин",
+      "address": "Ханты-Мансийский автономный округ — Югра, Сургут, Сосновая 70/3",
+      "phone": "+73462332331",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://uralaz.ru/dealers/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-33",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-33",
+      "name": "Техногазсервис",
+      "address": "Ханты-Мансийский автономный округ — Югра, Югорск, Промышленная 8",
+      "phone": "+73467527768",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://uralaz.ru/dealers/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-34",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-34",
+      "name": "Автодом",
+      "address": "Нижегородская область, Дзержинск, пос. Пыра, Московская 72",
+      "phone": "+79087236634",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://uralaz.ru/dealers/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-36",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-36",
+      "name": "ТНС",
+      "address": "Пензенская область, Пенза, Рябова 31",
+      "phone": "+78412293424",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://uralaz.ru/dealers/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-37",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-37",
+      "name": "Авторесурс",
+      "address": "Республика Башкортостан, Уфа, Федоровская 5",
+      "phone": "+78002227991",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://uralaz.ru/dealers/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-38",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-38",
+      "name": "Бурятский КАМАЗ Центр",
+      "address": "Республика Бурятия, Улан-Удэ, Дальнегурульбинская 5А",
+      "phone": "+73012224446",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://uralaz.ru/dealers/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-39",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-39",
+      "name": "БТС",
+      "address": "Смоленская область, с. Ольша, М-1 395 км",
+      "phone": "+74812250555",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://uralaz.ru/dealers/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-40",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-40",
+      "name": "Богуш-Сервис",
+      "address": "Тульская область, Тула, Новомосковское шоссе 52",
+      "phone": "+74872250707",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://uralaz.ru/dealers/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-41",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-41",
+      "name": "БАРС",
+      "address": "Челябинская область, Миасс, Привокзальная 19",
+      "phone": "+79525145242",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://uralaz.ru/dealers/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-42",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-42",
+      "name": "ЛуидорГарантия-Челябинск",
+      "address": "Челябинская область, Челябинск, Валдайская 17Б",
+      "phone": "+79823005415",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://uralaz.ru/dealers/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-43",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-43",
+      "name": "НТЦ Мега-М",
+      "address": "Челябинская область, Миасс, Тургоякское шоссе 5/17д",
+      "phone": "+79507337860",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://uralaz.ru/dealers/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-44",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-44",
+      "name": "БайкалАвтоТрак",
+      "address": "Забайкальский край, Чита, Угданский проезд 67",
+      "phone": "+79243801111",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://tprod.uralst.ru/servisnye-centry"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-45",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-45",
+      "name": "БОМОНД",
+      "address": "Иркутская область, Братск, Индустриальный проспект 5А стр. 10",
+      "phone": "+79025142028",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://tprod.uralst.ru/servisnye-centry"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-46",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-46",
+      "name": "МС-снаб",
+      "address": "Иркутская область, Иркутск, Трактовая 7А",
+      "phone": "+79248349797",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://tprod.uralst.ru/servisnye-centry"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-49",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-49",
+      "name": "МехСервис",
+      "address": "Иркутская область, Усть-Кут, Заречная 54А",
+      "phone": "+79041454763",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://tprod.uralst.ru/servisnye-centry"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-51",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-51",
+      "name": "БайкалАвтоТрак",
+      "address": "Иркутская область, Усть-Илимск, Усть-Илимское шоссе 30",
+      "phone": "+79245540426",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://tprod.uralst.ru/servisnye-centry"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-53",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-53",
+      "name": "СпецДеталь",
+      "address": "Краснодарский край, Анапа, 40 лет Победы 3с23",
+      "phone": "+78005001033",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://tprod.uralst.ru/servisnye-centry"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-54",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-54",
+      "name": "Еврофура",
+      "address": "Красноярский край, Красноярск, Маерчака 128",
+      "phone": "+73912218685",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://tprod.uralst.ru/servisnye-centry"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-56",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-56",
+      "name": "Махина / Мсервис",
+      "address": "Красноярский край, Красноярск, Северное шоссе 15Д",
+      "phone": "+73912997575",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://tprod.uralst.ru/servisnye-centry"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-58",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-58",
+      "name": "Комплексавто",
+      "address": "Оренбургская область, Бузулук, Фрунзе 70",
+      "phone": "+79228452929",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://tprod.uralst.ru/servisnye-centry"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-59",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-59",
+      "name": "Транском-сервис",
+      "address": "Республика Адыгея, аул Тахтамукай, Х.М. Совмена 77/5",
+      "phone": "+79883676920",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://tprod.uralst.ru/servisnye-centry"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-60",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-60",
+      "name": "АРМС",
+      "address": "Республика Татарстан, Набережные Челны, Авторемонтная 24В стр. 1",
+      "phone": "+79178791111",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://tprod.uralst.ru/servisnye-centry"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-61",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-61",
+      "name": "УралАвтосервис",
+      "address": "Самарская область, Самара, Гаражный проезд 8 корп. 4",
+      "phone": "+78463301736",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://tprod.uralst.ru/servisnye-centry"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-62",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-62",
+      "name": "ГК Вертикаль",
+      "address": "Ленинградская область, пос. Фёдоровское, Монолитная 8",
+      "phone": "+78126657927",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://tprod.uralst.ru/servisnye-centry"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-63",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-63",
+      "name": "Региональный сервисный центр Урал",
+      "address": "Свердловская область, Арамиль, Октябрьская 173",
+      "phone": "+78006004142",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://tprod.uralst.ru/servisnye-centry"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-64",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-64",
+      "name": "ГК Вертикаль",
+      "address": "Свердловская область, Екатеринбург, Полевской тракт 16 км, стр. 9",
+      "phone": "+73432372692",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://tprod.uralst.ru/servisnye-centry"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-66",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-66",
+      "name": "Дальлестехсервис",
+      "address": "Хабаровский край, Хабаровск, Трёхгорная 135",
+      "phone": "+74212479901",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://tprod.uralst.ru/servisnye-centry"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-67",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-67",
+      "name": "ВМС Тракс",
+      "address": "Ханты-Мансийский автономный округ — Югра, Нижневартовск, 9П 18",
+      "phone": "+79825322222",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://tprod.uralst.ru/servisnye-centry"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-68",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-68",
+      "name": "НГ-Сервис",
+      "address": "Челябинская область, Челябинск, Худякова 12к1",
+      "phone": "+73512672065",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://tprod.uralst.ru/servisnye-centry"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-69",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-69",
+      "name": "НГ сервис",
+      "address": "Ямало-Ненецкий автономный округ, Новый Уренгой, Магистральная 46Б",
+      "phone": "+73494245535",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://tprod.uralst.ru/servisnye-centry"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-70",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-70",
+      "name": "Риат Ноябрьск",
+      "address": "Ямало-Ненецкий автономный округ, Ноябрьск, Промузел Пелей, 11-я панель с1",
+      "phone": "+73496354595",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://tprod.uralst.ru/servisnye-centry"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-71",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-71",
+      "name": "Партнер Транс Сервис",
+      "address": "Тверская область, Тверь, Старицкое шоссе 15",
+      "phone": "+79105317324",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://m-nov.ru/contacts/5/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-72",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-72",
+      "name": "АвтоКондиция",
+      "address": "Московская область, с. Кудиново, Центральная 11Б",
+      "phone": "+79857692590",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://m-nov.ru/contacts/5/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-73",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-73",
+      "name": "Техтранс",
+      "address": "Республика Башкортостан, Уфа, Майкопская 5",
+      "phone": "+79178001982",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://m-nov.ru/contacts/5/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-74",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-74",
+      "name": "Компания Альфа",
+      "address": "Республика Татарстан, с. Бетьки, Новая 3-17",
+      "phone": "+79625670346",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://m-nov.ru/contacts/5/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-75",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-75",
+      "name": "Омегаскан",
+      "address": "Республика Башкортостан, мкр. Придорожный, Анатолия Локонченко 2 пом. 12",
+      "phone": "+79625673030",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://m-nov.ru/contacts/5/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-76",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-76",
+      "name": "БАВ-Движение",
+      "address": "Челябинская область, Челябинск, Линейная 98",
+      "phone": "+79227263227",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://m-nov.ru/contacts/5/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-77",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-77",
+      "name": "УРАЛЭКОСЕРВИСТРАНС",
+      "address": "Свердловская область, Екатеринбург, Шефская 3А",
+      "phone": "+79122902715",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://m-nov.ru/contacts/5/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-78",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-78",
+      "name": "АрхСкан",
+      "address": "Архангельская область, Котлас, пгт. Вычегодский, Энгельса 46",
+      "phone": "+79314149711",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://m-nov.ru/contacts/5/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-79",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-79",
+      "name": "Дельтаскан",
+      "address": "Республика Татарстан, Казань, М-7 797 км у пос. Новониколаевский",
+      "phone": "+79625673030",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://m-nov.ru/contacts/5/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-80",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-80",
+      "name": "Молния-комплект",
+      "address": "Челябинская область, ж/д разъезд Полетаево 2-е, Садовая 40",
+      "phone": "+79049425676",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://m-nov.ru/contacts/5/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-81",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-81",
+      "name": "КомиСкан",
+      "address": "Республика Коми, Сыктывкар, Мелиораторов 9",
+      "phone": "+79129676519",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://m-nov.ru/contacts/5/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-83",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-83",
+      "name": "Легат-сервис",
+      "address": "Московская область, Домодедово, д. Ярлыково, владение Легат",
+      "phone": "+79152970661",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://m-nov.ru/contacts/5/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-84",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-84",
+      "name": "СаянСкан",
+      "address": "Республика Хакасия, Черногорск, Энергетиков 10А лит. В1",
+      "phone": "+79130535483",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://m-nov.ru/contacts/5/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-85",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-85",
+      "name": "Тарна",
+      "address": "Новосибирская область, Новосибирск, Троллейная 85",
+      "phone": "+73833084096",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://m-nov.ru/contacts/5/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-86",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-86",
+      "name": "Тарна",
+      "address": "Омская область, Омск, 10 лет Октября 209",
+      "phone": "+73812585885",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://m-nov.ru/contacts/5/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-87",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-87",
+      "name": "Першерон",
+      "address": "Краснодарский край, Новороссийск, Железнодорожная петля 8 парк А",
+      "phone": "+79182344769",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://m-nov.ru/contacts/5/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-88",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-88",
+      "name": "ЭЛАНД",
+      "address": "Иркутская область, Иркутск, Ярославского 302А",
+      "phone": "+73952553310",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://m-nov.ru/contacts/5/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-89",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-89",
+      "name": "СибСканСервис",
+      "address": "Красноярский край, пгт. Березовка, 1 км а/д Красноярск-Железногорск, 3В пом. 2",
+      "phone": "+73912737061",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://m-nov.ru/contacts/5/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-90",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-90",
+      "name": "Лидер трак",
+      "address": "Удмуртская Республика, Ижевск, Автозаводская 5Б",
+      "phone": "+79124567020",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://m-nov.ru/contacts/5/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-91",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-91",
+      "name": "ПТОР-74",
+      "address": "Челябинская область, Челябинск, Асфальтная 7",
+      "phone": "+73517510103",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://m-nov.ru/contacts/5/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-93",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-93",
+      "name": "РТК",
+      "address": "Кемеровская область, п/ст. Тальжино, Советская 1/4",
+      "phone": "+73843993777",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://m-nov.ru/contacts/5/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-94",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-94",
+      "name": "РТК",
+      "address": "Кемеровская область, с. Верхотомское, Новая 105",
+      "phone": "+73842457422",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://m-nov.ru/contacts/5/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-95",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-95",
+      "name": "СТС",
+      "address": "Санкт-Петербург, Красное Село, Свободы 63 лит. А",
+      "phone": "+79095909909",
+      "evidence": "manufacturer_service_directory",
+      "source_urls": [
+        "https://m-nov.ru/contacts/5/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-96",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-96",
+      "name": "Эксклюзив",
+      "address": "Ленинградская область, Выборг, трасса Скандинавия 136 км, АБЗ Светлое",
+      "phone": "+78123262826",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://truck.ty.ru/service_wash",
+        "https://truck.ty.ru/stores_show"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-99",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-99",
+      "name": "Шиномонтаж",
+      "address": "Свердловская область, Екатеринбург, Монтажников 22А",
+      "phone": "+79122956386",
+      "evidence": "payment_network_directory",
+      "source_urls": [
+        "https://mega-karta.ru/news/gruzovoj-shinomontazh-po-toplivnoj-karte/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-100",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-100",
+      "name": "Шиномонтаж",
+      "address": "Владимирская область, с. Борисовское, Брутовский поворот 1",
+      "phone": "+79106725609",
+      "evidence": "payment_network_directory",
+      "source_urls": [
+        "https://mega-karta.ru/news/gruzovoj-shinomontazh-po-toplivnoj-karte/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-101",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-101",
+      "name": "TYREPLUS",
+      "address": "Красноярский край, Красноярск, Караульная 29",
+      "phone": "+73912724600",
+      "evidence": "payment_network_directory",
+      "source_urls": [
+        "https://mega-karta.ru/news/gruzovoj-shinomontazh-po-toplivnoj-karte/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-102",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-102",
+      "name": "Шиномонтаж",
+      "address": "Красноярский край, пос. Солонцы, квартал Торговый 3 стр. 3",
+      "phone": "+79569147635",
+      "evidence": "payment_network_directory",
+      "source_urls": [
+        "https://mega-karta.ru/news/gruzovoj-shinomontazh-po-toplivnoj-karte/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-103",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-103",
+      "name": "Шина сервис плюс",
+      "address": "Ленинградская область, Виллозонское г.п., Волхонское шоссе, з/у 6",
+      "phone": "+79112691824",
+      "evidence": "payment_network_directory",
+      "source_urls": [
+        "https://mega-karta.ru/news/gruzovoj-shinomontazh-po-toplivnoj-karte/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-104",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-104",
+      "name": "Шиномонтаж",
+      "address": "Новосибирская область, Новосибирск, Малыгина 13/1",
+      "phone": "+79628352040",
+      "evidence": "payment_network_directory",
+      "source_urls": [
+        "https://mega-karta.ru/news/gruzovoj-shinomontazh-po-toplivnoj-karte/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-105",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-105",
+      "name": "Рябиновая",
+      "address": "Омская область, Омск, 2-я Солнечная 19 корп. 1",
+      "phone": "+73812502218",
+      "evidence": "payment_network_directory",
+      "source_urls": [
+        "https://mega-karta.ru/news/gruzovoj-shinomontazh-po-toplivnoj-karte/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-106",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-106",
+      "name": "Шина сервис плюс",
+      "address": "Санкт-Петербург, Народного Ополчения 151",
+      "phone": "+78129272512",
+      "evidence": "payment_network_directory",
+      "source_urls": [
+        "https://mega-karta.ru/news/gruzovoj-shinomontazh-po-toplivnoj-karte/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-107",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-107",
+      "name": "Cordiant",
+      "address": "Томская область, Томск, Кузовлевский тракт 38",
+      "phone": "+79095437080",
+      "evidence": "payment_network_directory",
+      "source_urls": [
+        "https://mega-karta.ru/news/gruzovoj-shinomontazh-po-toplivnoj-karte/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-108",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-108",
+      "name": "Шиномонтаж",
+      "address": "Томская область, Томск, Ракетная 19",
+      "phone": "+79095438666",
+      "evidence": "payment_network_directory",
+      "source_urls": [
+        "https://mega-karta.ru/news/gruzovoj-shinomontazh-po-toplivnoj-karte/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-109",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-109",
+      "name": "Шиномонтаж",
+      "address": "Томская область, Томск, Мостовая 18/1 стр. 2",
+      "phone": "+79095436070",
+      "evidence": "payment_network_directory",
+      "source_urls": [
+        "https://mega-karta.ru/news/gruzovoj-shinomontazh-po-toplivnoj-karte/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b48-110",
+      "source_file": "sto-ural-trailer-wash-tire-batch48-2026-11-27.json",
+      "source_id": "b48-110",
+      "name": "Детали Машин",
+      "address": "Тюменская область, Тюмень, Дамбовская 10",
+      "phone": "+79681712727",
+      "evidence": "payment_network_directory",
+      "source_urls": [
+        "https://mega-karta.ru/news/gruzovoj-shinomontazh-po-toplivnoj-karte/"
+      ],
+      "notes": "Адрес и рабочий контакт из опубликованного перечня. Фактическую площадку, прием сторонних ТС, профиль и актуальность проверить. Общий телефон может принадлежать сети; не считать уникальным лидом.",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b49-wash-1",
+      "source_file": "sto-kogel-wash-review-batch49-2026-11-27.json",
+      "source_id": "b49-wash-1",
+      "name": "Портальная мойка — КАМАЗ Центр Екатеринбург",
+      "address": "Свердловская область, Берёзовский, Кольцевая 4К3",
+      "phone": "+73433806000",
+      "evidence": "business_first_party_profile",
+      "source_urls": [
+        "https://portalnaja-mojka.clients.site/"
+      ],
+      "notes": "ИНН 6678098570 заявлен в профиле; проверить связь с существующей СТО.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b49-wash-2",
+      "source_file": "sto-kogel-wash-review-batch49-2026-11-27.json",
+      "source_id": "b49-wash-2",
+      "name": "ШинаВсем",
+      "address": "Свердловская область, Екатеринбург, проезд Горнистов 1",
+      "phone": "+73433012202",
+      "evidence": "business_first_party_profile",
+      "source_urls": [
+        "https://shinavsem.ru/services/avtomoyka/"
+      ],
+      "notes": "Мойка сцепок 17–19 м заявлена; шиномонтаж на этой площадке уточнить.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b49-wash-3",
+      "source_file": "sto-kogel-wash-review-batch49-2026-11-27.json",
+      "source_id": "b49-wash-3",
+      "name": "Автомойка для грузовых и легковых автомобилей",
+      "address": "Нижегородская область, Нижний Новгород, Федосеенко 51Б",
+      "phone": "+78314154035",
+      "evidence": "directory_only",
+      "source_urls": [
+        "https://totadres.ru/nizhniy_novgorod/org/avtomoyka_dlya_gruzovyh_i_legkovyh_avtomobiley/898095"
+      ],
+      "notes": "Сторонний справочник, проверить оператора и высоту ворот.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b49-wash-4",
+      "source_file": "sto-kogel-wash-review-batch49-2026-11-27.json",
+      "source_id": "b49-wash-4",
+      "name": "Мега-мойка",
+      "address": "Республика Татарстан, Казань, 2-я Тихорецкая 10Б",
+      "phone": "+79600812812",
+      "evidence": "directory_only",
+      "source_urls": [
+        "https://orgzz.ru/kazan/co/delfin/567810"
+      ],
+      "notes": "Сторонний справочник; второй номер +7 987 296-65-40.",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    }
+  ],
+  "notes": "Draft only. Source and address review before publication; no FNS or operational verification claimed. Shared network contacts not verified branch-direct."
+}

@@ -1,0 +1,1408 @@
+{
+  "schema": "sto-regional-import-audit-v1",
+  "previous_drafts": 907,
+  "source_rows": 82,
+  "added_drafts": 81,
+  "held_count": 1,
+  "expected_drafts": 988,
+  "source_coordinates": 46,
+  "missing_coordinates": 942,
+  "byCategory": {
+    "tyre": 43,
+    "sto": 34,
+    "wash": 3,
+    "trailer": 1
+  },
+  "byBatch": {
+    "sto-kuzbass-r255-yurga-kemerovo-batch69": {
+      "input": 8,
+      "added": 8,
+      "held": 0
+    },
+    "sto-r255-mariinsk-achinsk-krasnoyarsk-batch70": {
+      "input": 15,
+      "added": 15,
+      "held": 0
+    },
+    "sto-r255-kansk-tayshet-nizhneudinsk-batch71": {
+      "input": 17,
+      "added": 17,
+      "held": 0
+    },
+    "sto-r255-tulun-zima-cheremkhovo-angarsk-irkutsk-batch72": {
+      "input": 15,
+      "added": 14,
+      "held": 1
+    },
+    "sto-r258-slyudyanka-baykalsk-kabansk-ulanude-batch73": {
+      "input": 16,
+      "added": 16,
+      "held": 0
+    },
+    "sto-r258-petrovsk-khilok-chita-batch74": {
+      "input": 7,
+      "added": 7,
+      "held": 0
+    },
+    "sto-r297-chernyshevsk-mogocha-skovorodino-magdagachi-batch75": {
+      "input": 4,
+      "added": 4,
+      "held": 0
+    }
+  },
+  "byRegion": {
+    "Кемеровская область": 11,
+    "Красноярский край": 26,
+    "Иркутская область": 19,
+    "Республика Бурятия": 14,
+    "Забайкальский край": 9,
+    "Амурская область": 2
+  },
+  "held": [
+    {
+      "source_file": "sto-r255-tulun-zima-cheremkhovo-angarsk-irkutsk-batch72-2026-11-27.json",
+      "source_id": "b72-angarsk-254",
+      "name": "Грузовой автосервис 950000",
+      "address": "Иркутская область, Ангарск, 254-й квартал, 2",
+      "phone": null,
+      "reason": "incomplete_or_invalid",
+      "existing": null
+    }
+  ],
+  "provenance": [
+    {
+      "id": "directory:research-b69-carpro",
+      "source_file": "sto-kuzbass-r255-yurga-kemerovo-batch69-2026-11-27.json",
+      "source_id": "b69-carpro",
+      "name": "CarPro servis",
+      "address": "Кемеровская область, Юрга, ул. Шоссейная, 52",
+      "phone": "+79609072060",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://kemerovo.spravker.ru/gorod-iurga/ustanovka-avtomobilnoi-ratsii/"
+      ],
+      "notes": "Грузовой профиль по картографической карточке CarPro servise Грузовой шиномонтаж, ID ChIJV2V3f-ZBJ0MRLoly1UrN3AY; справочник подтверждает телефон и адрес. Размеры колес уточнить.",
+      "timezone": "Asia/Novokuznetsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b69-yurga-58a",
+      "source_file": "sto-kuzbass-r255-yurga-kemerovo-batch69-2026-11-27.json",
+      "source_id": "b69-yurga-58a",
+      "name": "Грузовой и легковой шиномонтаж",
+      "address": "Кемеровская область, Юрга, ул. Шоссейная, 58А",
+      "phone": "+79235343534",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://e-avtozapis.ru/tochka/yurga",
+        "https://yurga.spravka.city/shinomontazh"
+      ],
+      "notes": "Телефон также в картографической карточке ChIJNRLprRVBJ0MRrfZDWofTH_g. График из карты, уточнить.",
+      "timezone": "Asia/Novokuznetsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b69-agat-mv",
+      "source_file": "sto-kuzbass-r255-yurga-kemerovo-batch69-2026-11-27.json",
+      "source_id": "b69-agat-mv",
+      "name": "АГАТ / МВ Трак Кемерово",
+      "address": "Кемеровская область, Кемерово, ул. Терешковой, 41А, к. 2",
+      "phone": "+73842447407",
+      "evidence": "first_party_and_directory",
+      "source_urls": [
+        "https://mb-kemerovo.ru/o-kompanii",
+        "https://agatkem.ru/",
+        "https://totadres.ru/kemerovo/org/agat/1892029"
+      ],
+      "notes": "Официальный сайт описывает единый комплекс. Адрес дилера 41/5, его контакт 49-29-90; не считать отдельной ремонтной точкой без подтверждения. Основной телефон из карточки ChIJHaZmcLcJ2EIRYdVBnSqrdm4. ИНН 4205385207 заявлен для ООО МВ Трак, не проверен в ФНС.",
+      "timezone": "Asia/Novokuznetsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b69-kvadrat-nahimova",
+      "source_file": "sto-kuzbass-r255-yurga-kemerovo-batch69-2026-11-27.json",
+      "source_id": "b69-kvadrat-nahimova",
+      "name": "Квадрат",
+      "address": "Кемеровская область, Кемерово, ул. Нахимова, 218/1",
+      "phone": "+79000551155",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://kemerovo.spravker.ru/gruzovoi-shinomontazh/",
+        "https://urbanplaces.su/ru_kemerovskaya-oblast---kuzbass/kemerovskij-gorodskoj-okrug-kemerovo/card-70000001027631635-kvadrat",
+        "https://yandex.com/maps/org/kvadrat/128696914418/"
+      ],
+      "notes": "В источниках 218 и 218/1; точный въезд подтвердить. График не проверен звонком.",
+      "timezone": "Asia/Novokuznetsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b69-kvadrat-sib",
+      "source_file": "sto-kuzbass-r255-yurga-kemerovo-batch69-2026-11-27.json",
+      "source_id": "b69-kvadrat-sib",
+      "name": "Квадрат",
+      "address": "Кемеровская область, Кемерово, ул. Сибиряков-Гвардейцев, 106",
+      "phone": "+79515760660",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://kemerovo.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Отдельный адрес и номер; подтвердить грузовую оснастку филиала.",
+      "timezone": "Asia/Novokuznetsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b69-avtoprofi",
+      "source_file": "sto-kuzbass-r255-yurga-kemerovo-batch69-2026-11-27.json",
+      "source_id": "b69-avtoprofi",
+      "name": "СТО AvtoProfi",
+      "address": "Кемеровская область, Кемерово, 2-я Рябинская ул., 25",
+      "phone": "+79832205050",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://kemerovo.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Не подтверждены прием тягачей, перечень работ и круглосуточная доступность.",
+      "timezone": "Asia/Novokuznetsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b69-truck-service",
+      "source_file": "sto-kuzbass-r255-yurga-kemerovo-batch69-2026-11-27.json",
+      "source_id": "b69-truck-service",
+      "name": "Truck-Сервис",
+      "address": "Кемеровская область, Кемерово, ул. Заводская, 1А",
+      "phone": "+79000506060",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://www.google.com/maps/search/?api=1&query=Truck-Сервис+Кемерово+Заводская+1А&query_place_id=ChIJJUGBKagM2EIRZgvSalMCGss"
+      ],
+      "notes": "Источник: картографическая карточка ChIJJUGBKagM2EIRZgvSalMCGss. Специализации, график и оператор требуют проверки.",
+      "timezone": "Asia/Novokuznetsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b69-traffik",
+      "source_file": "sto-kuzbass-r255-yurga-kemerovo-batch69-2026-11-27.json",
+      "source_id": "b69-traffik",
+      "name": "Траффик",
+      "address": "Кемеровская область, Кемерово, ул. Сахалинская, 38",
+      "phone": "+73842393110",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://asktel.ru/kemerovo/avtoservis/traffik/",
+        "https://www.google.com/maps/search/?api=1&query=Траффик+Кемерово+Сахалинская+38&query_place_id=ChIJYUPoiAwM2EIR4-_PFYSrF-E"
+      ],
+      "notes": "Номер из картографической карточки; справочник обновлен в 2019, старые номера и email только в очереди проверки. Действующий бизнес не подтвержден.",
+      "timezone": "Asia/Novokuznetsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b70-mariinsk-pitstop",
+      "source_file": "sto-r255-mariinsk-achinsk-krasnoyarsk-batch70-2026-11-27.json",
+      "source_id": "b70-mariinsk-pitstop",
+      "name": "Pit stop",
+      "address": "Кемеровская область, Мариинск, ул. Котовского, 83Г",
+      "phone": "+79049678202",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://mariinsk.spravker.ru/gruzovoi-shinomontazh/",
+        "https://mariinsk.spravker.ru/avtomoiki/",
+        "https://e-avtozapis.ru/tochka/mariinsk"
+      ],
+      "notes": "Также 83Б и Набережная 145 с тем же телефоном; отдельно не считать до уточнения.",
+      "timezone": "Asia/Novokuznetsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b70-mariinsk-avtoimport",
+      "source_file": "sto-r255-mariinsk-achinsk-krasnoyarsk-batch70-2026-11-27.json",
+      "source_id": "b70-mariinsk-avtoimport",
+      "name": "Автоимпорт+",
+      "address": "Кемеровская область, Мариинск, ул. 50 лет Октября, 78Б",
+      "phone": "+79235139163",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://mariinsk.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Уточнить максимальные размеры колес.",
+      "timezone": "Asia/Novokuznetsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b70-mariinsk-stal24",
+      "source_file": "sto-r255-mariinsk-achinsk-krasnoyarsk-batch70-2026-11-27.json",
+      "source_id": "b70-mariinsk-stal24",
+      "name": "Сталь24",
+      "address": "Кемеровская область, Мариинск, ул. Загородная, 60",
+      "phone": "+79134215970",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://mariinsk.spravker.ru/gruzovoi-shinomontazh/",
+        "https://avtorusy.com/shinomontazhi/mariinsk/shinomontazh-stal24/"
+      ],
+      "notes": "Номер и график из картографической карточки ChIJRwy94NR1KUMR3lQ3dtiXZpE; прием фур уточнить.",
+      "timezone": "Asia/Novokuznetsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b70-achinsk-perekrestok",
+      "source_file": "sto-r255-mariinsk-achinsk-krasnoyarsk-batch70-2026-11-27.json",
+      "source_id": "b70-achinsk-perekrestok",
+      "name": "Перекресток",
+      "address": "Красноярский край, Ачинск, ш. Байкал, 2А",
+      "phone": "+79235579808",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://achinsk.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "График и дополнительные ремонтные работы требуют подтверждения.",
+      "timezone": "Asia/Krasnoyarsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b70-achinsk-soyuz",
+      "source_file": "sto-r255-mariinsk-achinsk-krasnoyarsk-batch70-2026-11-27.json",
+      "source_id": "b70-achinsk-soyuz",
+      "name": "Союз-Комплект-Сервис",
+      "address": "Красноярский край, Ачинск, ул. Дзержинского, 61",
+      "phone": "+79082159032",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://achinsk.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Грузовая мойка не подтверждена.",
+      "timezone": "Asia/Krasnoyarsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b70-achinsk-shinpost",
+      "source_file": "sto-r255-mariinsk-achinsk-krasnoyarsk-batch70-2026-11-27.json",
+      "source_id": "b70-achinsk-shinpost",
+      "name": "ШинПост",
+      "address": "Красноярский край, Ачинск, ул. 5 Июля, 1В",
+      "phone": "+79607528000",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://achinsk.spravker.ru/gruzovoi-shinomontazh/",
+        "https://urbanplaces.su/ru_krasnoyarskij-kraj/achinsk-gorodskoj-okrug-achinsk/category-shinomontazh"
+      ],
+      "notes": "Картографический график отличается; уточнить.",
+      "timezone": "Asia/Krasnoyarsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b70-achinsk-regionavto",
+      "source_file": "sto-r255-mariinsk-achinsk-krasnoyarsk-batch70-2026-11-27.json",
+      "source_id": "b70-achinsk-regionavto",
+      "name": "Регион-авто",
+      "address": "Красноярский край, Ачинск, ул. Трудовых Резервов, 3",
+      "phone": "+79659157794",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://achinsk.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Прием тяжелых тягачей уточнить.",
+      "timezone": "Asia/Krasnoyarsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b70-achinsk-mira",
+      "source_file": "sto-r255-mariinsk-achinsk-krasnoyarsk-batch70-2026-11-27.json",
+      "source_id": "b70-achinsk-mira",
+      "name": "Шиномонтаж",
+      "address": "Красноярский край, Ачинск, ул. Мира, 13/1",
+      "phone": "+79607541222",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://achinsk.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Точный оператор и размеры колес неизвестны.",
+      "timezone": "Asia/Krasnoyarsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b70-achinsk-gruzshiny",
+      "source_file": "sto-r255-mariinsk-achinsk-krasnoyarsk-batch70-2026-11-27.json",
+      "source_id": "b70-achinsk-gruzshiny",
+      "name": "Грузовые автошины",
+      "address": "Красноярский край, Ачинск, ш. Байкал, 7А",
+      "phone": "+79135184730",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://achinsk.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Красноярское ш. 7 с тем же телефоном — возможный дубль; не считать отдельно.",
+      "timezone": "Asia/Krasnoyarsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b70-achinsk-sibirkoleso",
+      "source_file": "sto-r255-mariinsk-achinsk-krasnoyarsk-batch70-2026-11-27.json",
+      "source_id": "b70-achinsk-sibirkoleso",
+      "name": "Сибирь Колесо",
+      "address": "Красноярский край, Ачинск, ул. Профсоюзная, 7",
+      "phone": "+79832685055",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://achinsk.spravker.ru/gruzovoi-shinomontazh/",
+        "https://achinsk.spravker.ru/avtoaksessuary/sibir-koleso1.htm"
+      ],
+      "notes": "Общие контакты сети не считать отдельными площадками.",
+      "timezone": "Asia/Krasnoyarsk",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b70-achinsk-baykal9",
+      "source_file": "sto-r255-mariinsk-achinsk-krasnoyarsk-batch70-2026-11-27.json",
+      "source_id": "b70-achinsk-baykal9",
+      "name": "Грузовой автосервис",
+      "address": "Красноярский край, Ачинск, ш. Байкал, 9А",
+      "phone": "+79233090006",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://achinsk.spravker.ru/remont-tormoznoi-sistemy-gruzovykh-avtomobilei/",
+        "https://yandex.com/maps/org/gruzovoy_avtoservis/51187657975/"
+      ],
+      "notes": "Номер и адрес совпадают в двух источниках. Уточнить виды ремонта.",
+      "timezone": "Asia/Krasnoyarsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b70-achinsk-dr-dizel",
+      "source_file": "sto-r255-mariinsk-achinsk-krasnoyarsk-batch70-2026-11-27.json",
+      "source_id": "b70-achinsk-dr-dizel",
+      "name": "Dr. Dizel",
+      "address": "Красноярский край, Ачинск, Южная Промзона, квартал № 12, 1",
+      "phone": "+79607534223",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://achinsk.spravker.ru/remont-tormoznoi-sistemy-gruzovykh-avtomobilei/",
+        "https://achinsk.spravker.ru/diagnostika-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Возможность стендового ремонта ТНВД и форсунок уточнить.",
+      "timezone": "Asia/Krasnoyarsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b70-achinsk-gagarina",
+      "source_file": "sto-r255-mariinsk-achinsk-krasnoyarsk-batch70-2026-11-27.json",
+      "source_id": "b70-achinsk-gagarina",
+      "name": "Шиномонтажная",
+      "address": "Красноярский край, Ачинск, ул. Гагарина, 3А",
+      "phone": "+79059718894",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://www.google.com/maps/search/?api=1&query=Шиномонтажная+Ачинск+Гагарина+3А&query_place_id=ChIJn6ReM0zh1FwR3gmxdcrlkns"
+      ],
+      "notes": "Категория карты Truck repair shop; грузовой шиномонтаж и точный перечень работ уточнить.",
+      "timezone": "Asia/Krasnoyarsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b70-achinsk-rastochka",
+      "source_file": "sto-r255-mariinsk-achinsk-krasnoyarsk-batch70-2026-11-27.json",
+      "source_id": "b70-achinsk-rastochka",
+      "name": "Расточка Купола",
+      "address": "Красноярский край, Ачинск, Южная Промзона, квартал № 6, 1",
+      "phone": "+79831536412",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://achinsk.spravker.ru/remont-dvigatelei-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Уточнить оборудование и работу с тяжелыми дизелями.",
+      "timezone": "Asia/Krasnoyarsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b70-krasnoyarsk-enisey",
+      "source_file": "sto-r255-mariinsk-achinsk-krasnoyarsk-batch70-2026-11-27.json",
+      "source_id": "b70-krasnoyarsk-enisey",
+      "name": "Енисей Трак Сервис",
+      "address": "Красноярский край, Красноярск, ул. Рейдовая, 58А",
+      "phone": "+73912163377",
+      "evidence": "first_party_and_directory",
+      "source_urls": [
+        "https://www.volvotruck24.ru/",
+        "https://www.volvotruck24.ru/Услуги/"
+      ],
+      "notes": "Главный телефон и график с собственного сайта; второй номер из карты. Марки Volvo, Renault, SITRAK, SHACMAN, HOWO, DONGFENG, DAYUN; авторизацию проверять отдельно.",
+      "timezone": "Asia/Krasnoyarsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b71-kubekovo",
+      "source_file": "sto-r255-kansk-tayshet-nizhneudinsk-batch71-2026-11-27.json",
+      "source_id": "b71-kubekovo",
+      "name": "СибСканСервис — Кубеково",
+      "address": "Красноярский край, Красноярск, Кубековская промышленная зона, 26А/2",
+      "phone": "+73919869436",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://sitrak-krsk.ru/service"
+      ],
+      "notes": "Контакт отдела сервиса, доб. 1. Общая почта оператора. Услуги сети не считать гарантированными в каждом филиале.",
+      "timezone": "Asia/Krasnoyarsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b71-berezovka-solnechnaya",
+      "source_file": "sto-r255-kansk-tayshet-nizhneudinsk-batch71-2026-11-27.json",
+      "source_id": "b71-berezovka-solnechnaya",
+      "name": "Грузовой автосервис",
+      "address": "Красноярский край, пгт Берёзовка, ул. Солнечная, 22Б",
+      "phone": "+79230207377",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://urbanplaces.su/ru_krasnoyarskij-kraj/berezovskij-rajon-pgt-berezovka/card-2315686-gruzovoj-avtoservis"
+      ],
+      "notes": "Координаты источника 56.025859, 93.094003; проверить въезд и оператора.",
+      "timezone": "Asia/Krasnoyarsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b71-kansk-weld",
+      "source_file": "sto-r255-kansk-tayshet-nizhneudinsk-batch71-2026-11-27.json",
+      "source_id": "b71-kansk-weld",
+      "name": "Сварочные работы",
+      "address": "Красноярский край, Канск, СО Дымок, ул. Центральная, 4",
+      "phone": "+79029648540",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://kansk.spravker.ru/gruzovoi-shinomontazh/",
+        "https://kansk.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "На том же адресе другая карточка шиномонтажа +7 960 763-70-68; проверить операторов, не считать отдельным объектом.",
+      "timezone": "Asia/Krasnoyarsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b71-kansk-shinka",
+      "source_file": "sto-r255-kansk-tayshet-nizhneudinsk-batch71-2026-11-27.json",
+      "source_id": "b71-kansk-shinka",
+      "name": "Шинка Канск",
+      "address": "Красноярский край, Канск, ул. Урицкого, 7",
+      "phone": "+79135243426",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://kansk.spravker.ru/gruzovoi-shinomontazh/",
+        "https://spravbiz.ru/ilanskij/avto/gruzovoj-shinomontazh/"
+      ],
+      "notes": "Картографический график до 20:00; уточнить прием тяжелых колес.",
+      "timezone": "Asia/Krasnoyarsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b71-kansk-ivanor",
+      "source_file": "sto-r255-kansk-tayshet-nizhneudinsk-batch71-2026-11-27.json",
+      "source_id": "b71-kansk-ivanor",
+      "name": "Ivanor",
+      "address": "Красноярский край, Канск, ул. Гаражная, 1",
+      "phone": "+73916131818",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://kansk.spravker.ru/gruzovoi-shinomontazh/",
+        "https://kansk.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Уточнить грузовую оснастку филиала, общие 800 — номера сети.",
+      "timezone": "Asia/Krasnoyarsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b71-kansk-avtomag",
+      "source_file": "sto-r255-kansk-tayshet-nizhneudinsk-batch71-2026-11-27.json",
+      "source_id": "b71-kansk-avtomag",
+      "name": "АвтоМаг",
+      "address": "Красноярский край, Канск, ул. Красная Иланка, 1",
+      "phone": "+73916135222",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://kansk.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Проверить назначение телефонов, G Energy на том же адресе не считать отдельной точкой.",
+      "timezone": "Asia/Krasnoyarsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b71-kansk-redarmy",
+      "source_file": "sto-r255-kansk-tayshet-nizhneudinsk-batch71-2026-11-27.json",
+      "source_id": "b71-kansk-redarmy",
+      "name": "СТО / Шиномонтаж",
+      "address": "Красноярский край, Канск, ул. Красной Армии, 5/3",
+      "phone": "+79835019445",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://kansk.spravker.ru/gruzovoi-shinomontazh/",
+        "https://spravbiz.ru/ilanskij/avto/gruzovoj-shinomontazh/"
+      ],
+      "notes": "Карта указывает до 19:00; уточнить прием фур.",
+      "timezone": "Asia/Krasnoyarsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b71-kansk-body",
+      "source_file": "sto-r255-kansk-tayshet-nizhneudinsk-batch71-2026-11-27.json",
+      "source_id": "b71-kansk-body",
+      "name": "Центр кузовного ремонта",
+      "address": "Красноярский край, Канск, пос. Ремзавода, 26/1",
+      "phone": "+79130470707",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://kansk.spravker.ru/remont-gruzovykh-avtomobilei/",
+        "https://kansk.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Размер ремонтируемых ТС уточнить.",
+      "timezone": "Asia/Krasnoyarsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b71-kansk-remzona",
+      "source_file": "sto-r255-kansk-tayshet-nizhneudinsk-batch71-2026-11-27.json",
+      "source_id": "b71-kansk-remzona",
+      "name": "РемЗона 24",
+      "address": "Красноярский край, Канск, ул. Московская, 69А",
+      "phone": "+79333345777",
+      "evidence": "first_party_and_directory",
+      "source_urls": [
+        "https://kansk.spravker.ru/remont-gruzovykh-avtomobilei/",
+        "https://xn----7sbbgarwrb3aezleee.xn--p1ai/contacts/"
+      ],
+      "notes": "Официальный сайт указывает Московская 69 и Залесная 2 стр. 1. Второй адрес не считать отдельно до проверки; уточнить прием тяжелых тягачей и график.",
+      "timezone": "Asia/Krasnoyarsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b71-kansk-rotor",
+      "source_file": "sto-r255-kansk-tayshet-nizhneudinsk-batch71-2026-11-27.json",
+      "source_id": "b71-kansk-rotor",
+      "name": "Автокомплекс Ротор",
+      "address": "Красноярский край, Канск, ул. Магистральная, 30А",
+      "phone": "+79029595957",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://kansk.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Шиномонтаж с другим телефоном на этом адресе не считать отдельно до уточнения.",
+      "timezone": "Asia/Krasnoyarsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b71-kansk-angar",
+      "source_file": "sto-r255-kansk-tayshet-nizhneudinsk-batch71-2026-11-27.json",
+      "source_id": "b71-kansk-angar",
+      "name": "Ангар",
+      "address": "Красноярский край, Канск, ул. Герцена, 13А",
+      "phone": "+79130350999",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://kansk.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Уточнить профиль и размеры ТС.",
+      "timezone": "Asia/Krasnoyarsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b71-kansk-drive",
+      "source_file": "sto-r255-kansk-tayshet-nizhneudinsk-batch71-2026-11-27.json",
+      "source_id": "b71-kansk-drive",
+      "name": "DriveAvto",
+      "address": "Красноярский край, Канск, ул. Кайтымская, 160, стр. 1",
+      "phone": "+79233304758",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://kansk.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Уточнить прием тягачей.",
+      "timezone": "Asia/Krasnoyarsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b71-kansk-anod",
+      "source_file": "sto-r255-kansk-tayshet-nizhneudinsk-batch71-2026-11-27.json",
+      "source_id": "b71-kansk-anod",
+      "name": "Анод+",
+      "address": "Красноярский край, Канск, ул. Магистральная, 100, стр. 2",
+      "phone": "+79135655886",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://kansk.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Возможная связь с шиномонтажом Магистральная 100; не считать дополнительной точкой.",
+      "timezone": "Asia/Krasnoyarsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b71-kansk-budy",
+      "source_file": "sto-r255-kansk-tayshet-nizhneudinsk-batch71-2026-11-27.json",
+      "source_id": "b71-kansk-budy",
+      "name": "Шиномонтаж",
+      "address": "Красноярский край, Канск, ул. Николая Буды, 92",
+      "phone": "+79131768374",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://kansk.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Уточнить прием тяжелых колес.",
+      "timezone": "Asia/Krasnoyarsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b71-tayshet-gruzserv",
+      "source_file": "sto-r255-kansk-tayshet-nizhneudinsk-batch71-2026-11-27.json",
+      "source_id": "b71-tayshet-gruzserv",
+      "name": "Грузсервис",
+      "address": "Иркутская область, Тайшет, ул. Индустриальная, 1-30Н",
+      "phone": "+79140005285",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://irk.auto2.info/tayshet/gruzservis-438203/",
+        "https://tajshet.jsprav.ru/tsentryi-po-remontu-gruzovyih-avtomobilej/"
+      ],
+      "notes": "Карта подтверждает телефон и адрес (ChIJbatuLSD14FwRJs3lp_X7KTE). Справочник содержит широкий список услуг, ремонт прицепов и рефрижераторов требуют прямого подтверждения.",
+      "timezone": "Asia/Irkutsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b71-tayshet-tire",
+      "source_file": "sto-r255-kansk-tayshet-nizhneudinsk-batch71-2026-11-27.json",
+      "source_id": "b71-tayshet-tire",
+      "name": "Шиномонтаж",
+      "address": "Иркутская область, Тайшет, ул. 50 лет ВЛКСМ, 36",
+      "phone": "+79500847404",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://taishet.spravker.ru/shinomontazh/shinomontazh-2.htm",
+        "https://tajshet.jsprav.ru/tsentryi-po-remontu-gruzovyih-avtomobilej/"
+      ],
+      "notes": "Грузовой профиль по рубрикам каталогов, размеры колес неизвестны.",
+      "timezone": "Asia/Irkutsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b71-nizhneudinsk-magistral",
+      "source_file": "sto-r255-kansk-tayshet-nizhneudinsk-batch71-2026-11-27.json",
+      "source_id": "b71-nizhneudinsk-magistral",
+      "name": "Магистраль",
+      "address": "Иркутская область, Нижнеудинск, ул. Красноармейская, 45",
+      "phone": "+79086457888",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://nizhneudinsk.spravker.ru/avtomoiki/"
+      ],
+      "notes": "Телефон +7 950 056-70-00 также на Красноармейской 43; считать одним комплексом до уточнения. Габариты бокса и грузовой профиль проверить.",
+      "timezone": "Asia/Irkutsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b72-tulun-avtomag",
+      "source_file": "sto-r255-tulun-zima-cheremkhovo-angarsk-irkutsk-batch72-2026-11-27.json",
+      "source_id": "b72-tulun-avtomag",
+      "name": "АвтоМаг",
+      "address": "Иркутская область, Тулун, ул. Ленина, 29А",
+      "phone": "+79501368884",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://tulun.spravker.ru/gruzovoi-shinomontazh/",
+        "https://tulun.jsprav.ru/gruzovoj-shinomontazh/"
+      ],
+      "notes": "Грузовой профиль по справочникам, проверить прием тяжелых колес.",
+      "timezone": "Asia/Irkutsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b72-tulun-bomond",
+      "source_file": "sto-r255-tulun-zima-cheremkhovo-angarsk-irkutsk-batch72-2026-11-27.json",
+      "source_id": "b72-tulun-bomond",
+      "name": "Бомонд",
+      "address": "Иркутская область, Тулун, ул. Нововолодарского, 20А",
+      "phone": "+79016311890",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://tulun.spravker.ru/gruzovoi-shinomontazh/",
+        "https://tulun.jsprav.ru/gruzovoj-shinomontazh/"
+      ],
+      "notes": "Отдельный адрес от филиалов в Братске из пакетов 32/48. Второй номер проверить на принадлежность филиалу.",
+      "timezone": "Asia/Irkutsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b72-tulun-shina",
+      "source_file": "sto-r255-tulun-zima-cheremkhovo-angarsk-irkutsk-batch72-2026-11-27.json",
+      "source_id": "b72-tulun-shina",
+      "name": "Тулуншина",
+      "address": "Иркутская область, Тулун, Песочный пер., 1",
+      "phone": "+79161782578",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://tulun.spravker.ru/gruzovoi-shinomontazh/",
+        "https://tulun.jsprav.ru/gruzovoj-shinomontazh/"
+      ],
+      "notes": "График и местное присутствие оператора уточнить; номера опубликованы в каталоге.",
+      "timezone": "Asia/Irkutsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b72-tulun-truda",
+      "source_file": "sto-r255-tulun-zima-cheremkhovo-angarsk-irkutsk-batch72-2026-11-27.json",
+      "source_id": "b72-tulun-truda",
+      "name": "Шиномонтаж",
+      "address": "Иркутская область, Тулун, ул. Труда, 21",
+      "phone": "+79041474440",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://tulun.spravker.ru/gruzovoi-shinomontazh/",
+        "https://tulun.jsprav.ru/gruzovoj-shinomontazh/"
+      ],
+      "notes": "Наличие мойки в рубриках не подтверждает мойку фур.",
+      "timezone": "Asia/Irkutsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b72-tulun-autobox",
+      "source_file": "sto-r255-tulun-zima-cheremkhovo-angarsk-irkutsk-batch72-2026-11-27.json",
+      "source_id": "b72-tulun-autobox",
+      "name": "Auto Box",
+      "address": "Иркутская область, Тулун, ул. Гидролизная, 37А",
+      "phone": "+79842703888",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://tulun.spravker.ru/gruzovoi-shinomontazh/",
+        "https://tulun.jsprav.ru/gruzovoj-shinomontazh/"
+      ],
+      "notes": "Размеры колес и прием фур уточнить; грузовая мойка не подтверждена.",
+      "timezone": "Asia/Irkutsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b72-tulun-autolux",
+      "source_file": "sto-r255-tulun-zima-cheremkhovo-angarsk-irkutsk-batch72-2026-11-27.json",
+      "source_id": "b72-tulun-autolux",
+      "name": "Автолюкс",
+      "address": "Иркутская область, Тулун, ул. Гоголя, 37Б",
+      "phone": "+79642841111",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://tulun.yaspravka.com/sto-avtolyuks/"
+      ],
+      "notes": "Отзывы 2019–2020; текущую работу и тяжелый ремонт не подтверждают. Приоритет повторной проверки.",
+      "timezone": "Asia/Irkutsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b72-kuytun-r255",
+      "source_file": "sto-r255-tulun-zima-cheremkhovo-angarsk-irkutsk-batch72-2026-11-27.json",
+      "source_id": "b72-kuytun-r255",
+      "name": "Шиномонтажная мастерская",
+      "address": "Иркутская область, р. п. Куйтун, Р-255, 1560-й км, 3",
+      "phone": "+79086477766",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://totadres.ru/irkutskaya_oblast/org/shinomontazhnaya_masterskaya/4516018"
+      ],
+      "notes": "Точный въезд и фактическую круглосуточность проверить.",
+      "timezone": "Asia/Irkutsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b72-cheremkhovo-pitstop",
+      "source_file": "sto-r255-tulun-zima-cheremkhovo-angarsk-irkutsk-batch72-2026-11-27.json",
+      "source_id": "b72-cheremkhovo-pitstop",
+      "name": "Pit-stop",
+      "address": "Иркутская область, Черемхово, ул. 2-я Красноармейская, 5",
+      "phone": "+79041530303",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://spravbiz.ru/cheremhovo/avto/tsentryi-po-remontu-gruzovyih-avtomobilej/",
+        "https://yandex.com/maps/org/pit_stop/210805992509/"
+      ],
+      "notes": "Карта указывает грузовые автомобили и замену масла для них; объем ремонта тягачей уточнить. Не путать с Pit stop Мариинска.",
+      "timezone": "Asia/Irkutsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b72-cheremkhovo-ntyre",
+      "source_file": "sto-r255-tulun-zima-cheremkhovo-angarsk-irkutsk-batch72-2026-11-27.json",
+      "source_id": "b72-cheremkhovo-ntyre",
+      "name": "N-Tyre",
+      "address": "Иркутская область, Черемхово, ул. Первомайская, 203",
+      "phone": "+79041257775",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://spravbiz.ru/cheremhovo/avto/gruzovoj-shinomontazh/",
+        "https://servicesauto.ru/cheremhovo/avtotehtsentr-n-tyre-che.htm"
+      ],
+      "notes": "Грузовая рубрика в одном источнике, другой источник перечисляет преимущественно легковые марки; тяжелую оснастку уточнить.",
+      "timezone": "Asia/Irkutsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b72-angarsk-dis",
+      "source_file": "sto-r255-tulun-zima-cheremkhovo-angarsk-irkutsk-batch72-2026-11-27.json",
+      "source_id": "b72-angarsk-dis",
+      "name": "Дис трак сервис",
+      "address": "Иркутская область, Ангарск, 272-й квартал, стр. 17",
+      "phone": "+79249939933",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://angarsk.spravka.city/company/dis-trak-servis"
+      ],
+      "notes": "Полный телефон опубликован как контакт WhatsApp компании. Сайт dis-truck.ru указан, но недоступен при проверке.",
+      "timezone": "Asia/Irkutsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b72-angarsk-titan",
+      "source_file": "sto-r255-tulun-zima-cheremkhovo-angarsk-irkutsk-batch72-2026-11-27.json",
+      "source_id": "b72-angarsk-titan",
+      "name": "Титан",
+      "address": "Иркутская область, Ангарск, 254-й квартал, стр. 1/1, 4/1, бокс 69",
+      "phone": "+79247115599",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://angarsk.spravka.city/company/titan-402"
+      ],
+      "notes": "Отличается от СТО 950000 адресом и контактом; проверить точную площадку и независимость.",
+      "timezone": "Asia/Irkutsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b72-angarsk-kmarx",
+      "source_file": "sto-r255-tulun-zima-cheremkhovo-angarsk-irkutsk-batch72-2026-11-27.json",
+      "source_id": "b72-angarsk-kmarx",
+      "name": "Грузовой автосервис",
+      "address": "Иркутская область, Ангарск, просп. Карла Маркса, 97/5",
+      "phone": "+79501162666",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://rting.ru/angarsk/co/gruzovoj_avtoservis/486426"
+      ],
+      "notes": "Грузовой профиль указан в карточке; уточнить операторов и виды принимаемых тягачей.",
+      "timezone": "Asia/Irkutsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b72-angarsk-micro17",
+      "source_file": "sto-r255-tulun-zima-cheremkhovo-angarsk-irkutsk-batch72-2026-11-27.json",
+      "source_id": "b72-angarsk-micro17",
+      "name": "Грузовой, автосервис",
+      "address": "Иркутская область, Ангарск, 17-й микрорайон, 23/5",
+      "phone": "+79027649906",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://2sp.me/ru/angarsk/company/gruzovoy-avtoservis-5"
+      ],
+      "notes": "Профиль и адрес из справочника; уточнить размеры техники и работу с прицепами.",
+      "timezone": "Asia/Irkutsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b72-irkutsk-irkuttrak",
+      "source_file": "sto-r255-tulun-zima-cheremkhovo-angarsk-irkutsk-batch72-2026-11-27.json",
+      "source_id": "b72-irkutsk-irkuttrak",
+      "name": "Иркут Трак Сервис",
+      "address": "Иркутская область, Иркутск, ул. Ракитная, 15",
+      "phone": "+73952767120",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://www.sibavto.com/services/gruzovoy-servisnyy-tsentr-irkut-trak-servis/"
+      ],
+      "notes": "Собственный сайт ГК ЧТЗ-сервис; обслуживание автопарков по договору. Проверить юридического оператора площадки и совпадения с другими карточками группы.",
+      "timezone": "Asia/Irkutsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b73-slyudyanka-sep",
+      "source_file": "sto-r258-slyudyanka-baykalsk-kabansk-ulanude-batch73-2026-11-27.json",
+      "source_id": "b73-slyudyanka-sep",
+      "name": "СЭП",
+      "address": "Иркутская область, Слюдянка, Амбулаторная ул., 8А",
+      "phone": "+79025768668",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://sliudianka.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Грузовой профиль указан в рубрике, подтвердить размеры колес и график.",
+      "timezone": "Asia/Irkutsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b73-slyudyanka-shin",
+      "source_file": "sto-r258-slyudyanka-baykalsk-kabansk-ulanude-batch73-2026-11-27.json",
+      "source_id": "b73-slyudyanka-shin",
+      "name": "ШинСервис",
+      "address": "Иркутская область, Слюдянка, ул. Перевальская, 5Б/5",
+      "phone": "+79021774013",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://sliudianka.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Проверить прием тяжелых колес.",
+      "timezone": "Asia/Irkutsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b73-sotnikovo-sindikat",
+      "source_file": "sto-r258-slyudyanka-baykalsk-kabansk-ulanude-batch73-2026-11-27.json",
+      "source_id": "b73-sotnikovo-sindikat",
+      "name": "Sindikat",
+      "address": "Республика Бурятия, с. Сотниково, ул. Магистральная, 1",
+      "phone": "+79667640777",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://ulan-ude.big-book-avto.ru/gruzovoy-shinomontazh/"
+      ],
+      "notes": "Тот же номер на Трактовой, 132; отдельность площадок не подтверждена, не удваивать.",
+      "timezone": "Asia/Irkutsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b73-sotnikovo-partizan",
+      "source_file": "sto-r258-slyudyanka-baykalsk-kabansk-ulanude-batch73-2026-11-27.json",
+      "source_id": "b73-sotnikovo-partizan",
+      "name": "Шиномонтаж",
+      "address": "Республика Бурятия, с. Сотниково, ул. Партизанская, 88",
+      "phone": "+79899330001",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://ulan-ude.big-book-avto.ru/gruzovoy-shinomontazh/"
+      ],
+      "notes": "Размер колес и график проверить.",
+      "timezone": "Asia/Irkutsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b73-uu-pugacheva",
+      "source_file": "sto-r258-slyudyanka-baykalsk-kabansk-ulanude-batch73-2026-11-27.json",
+      "source_id": "b73-uu-pugacheva",
+      "name": "СТО грузовых автомобилей",
+      "address": "Республика Бурятия, Улан-Удэ, ул. Пугачёва, 53А",
+      "phone": "+73012619955",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://urbanplaces.su/ru_respublika-buryatiya/ulan-ude-gorodskoj-okrug-ulan-ude/category-remont-gruzovyih-avtomobilej",
+        "https://urbanplaces.su/ru_respublika-buryatiya/ulan-ude-gorodskoj-okrug-ulan-ude/card-2604932-sto-gruzovyih-avtomobilej"
+      ],
+      "notes": "Пугачёва, 53А/1 с тем же номером не считать отдельной точкой.",
+      "timezone": "Asia/Irkutsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b73-uu-avtotransport38-1",
+      "source_file": "sto-r258-slyudyanka-baykalsk-kabansk-ulanude-batch73-2026-11-27.json",
+      "source_id": "b73-uu-avtotransport38-1",
+      "name": "СТО по ремонту грузовой техники",
+      "address": "Республика Бурятия, Улан-Удэ, ул. Автотранспортная, 38А, к. 1",
+      "phone": "+79245557878",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://mestam.info/ru/ulan-ude/mesto/6358454-sto-po-remontu-gruzovoi-tehniki-avtotransportnaya-38a-k1"
+      ],
+      "notes": "Соседний корпус 2 имеет другую карточку и телефон; независимость операторов проверить до публикации.",
+      "timezone": "Asia/Irkutsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b73-uu-avtotransport29",
+      "source_file": "sto-r258-slyudyanka-baykalsk-kabansk-ulanude-batch73-2026-11-27.json",
+      "source_id": "b73-uu-avtotransport29",
+      "name": "Шиномонтажная мастерская грузовых автомобилей",
+      "address": "Республика Бурятия, Улан-Удэ, ул. Автотранспортная, 29, к. 1",
+      "phone": "+79243925585",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://mestam.info/ru/ulan-ude/mesto/6358620-shinomontajnaya-masterskaya-gruzovih-avtomobilei-avtotransportnaya-29-k1"
+      ],
+      "notes": "Филиал 38Б указан в источнике, но отдельность и контакты не подтверждены.",
+      "timezone": "Asia/Irkutsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b73-uu-avtodizel",
+      "source_file": "sto-r258-slyudyanka-baykalsk-kabansk-ulanude-batch73-2026-11-27.json",
+      "source_id": "b73-uu-avtodizel",
+      "name": "Автодизель",
+      "address": "Республика Бурятия, Улан-Удэ, ул. Ботаническая, 30Е",
+      "phone": "+79021688377",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://ulan-ude.spravka.city/company/avtodizel-46"
+      ],
+      "notes": "Телефон опубликован как деловой контакт мессенджера, голосовые звонки не проверены.",
+      "timezone": "Asia/Irkutsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b73-uu-komtrans",
+      "source_file": "sto-r258-slyudyanka-baykalsk-kabansk-ulanude-batch73-2026-11-27.json",
+      "source_id": "b73-uu-komtrans",
+      "name": "Komtrans service / XCMG",
+      "address": "Республика Бурятия, Улан-Удэ, ул. 502-й километр, 160Б",
+      "phone": "+79244516393",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://ulan-ude.spravker.ru/remont-pritsepov/"
+      ],
+      "notes": "Справочная рубрика, уточнить прием магистральных полуприцепов и профиль спецтехники.",
+      "timezone": "Asia/Irkutsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b73-uu-tehass",
+      "source_file": "sto-r258-slyudyanka-baykalsk-kabansk-ulanude-batch73-2026-11-27.json",
+      "source_id": "b73-uu-tehass",
+      "name": "ТехАСС",
+      "address": "Республика Бурятия, Улан-Удэ, ул. Лимонова, 2Б/5",
+      "phone": "+73012700900",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://urbanplaces.su/ru_respublika-buryatiya/ulan-ude-gorodskoj-okrug-ulan-ude/category-remont-gruzovyih-avtomobilej"
+      ],
+      "notes": "Уточнить услуги и график.",
+      "timezone": "Asia/Irkutsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b73-uu-radiator",
+      "source_file": "sto-r258-slyudyanka-baykalsk-kabansk-ulanude-batch73-2026-11-27.json",
+      "source_id": "b73-uu-radiator",
+      "name": "Компания по ремонту радиаторов",
+      "address": "Республика Бурятия, Улан-Удэ, ул. Трактовая, 16",
+      "phone": "+73012650202",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://urbanplaces.su/ru_respublika-buryatiya/ulan-ude-gorodskoj-okrug-ulan-ude/category-remont-gruzovyih-avtomobilej"
+      ],
+      "notes": "Уточнить типы радиаторов и режим работы.",
+      "timezone": "Asia/Irkutsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b73-uu-atoz",
+      "source_file": "sto-r258-slyudyanka-baykalsk-kabansk-ulanude-batch73-2026-11-27.json",
+      "source_id": "b73-uu-atoz",
+      "name": "СТО от А до Я",
+      "address": "Республика Бурятия, Улан-Удэ, ул. Трактовая, 36",
+      "phone": "+79148329490",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://urbanplaces.su/ru_respublika-buryatiya/ulan-ude-gorodskoj-okrug-ulan-ude/category-remont-gruzovyih-avtomobilej"
+      ],
+      "notes": "Подтвердить работу с тяжелыми тягачами.",
+      "timezone": "Asia/Irkutsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b73-uu-maxpower",
+      "source_file": "sto-r258-slyudyanka-baykalsk-kabansk-ulanude-batch73-2026-11-27.json",
+      "source_id": "b73-uu-maxpower",
+      "name": "MaxPower Service",
+      "address": "Республика Бурятия, Улан-Удэ, ул. Залесная, 246",
+      "phone": "+73012573737",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://urbanplaces.su/ru_respublika-buryatiya/ulan-ude-gorodskoj-okrug-ulan-ude/category-remont-gruzovyih-avtomobilej",
+        "https://ulan-ude.big-book-avto.ru/gruzovoy-shinomontazh/"
+      ],
+      "notes": "Точный профиль и габариты обслуживаемой техники уточнить.",
+      "timezone": "Asia/Irkutsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b73-uu-avtomig",
+      "source_file": "sto-r258-slyudyanka-baykalsk-kabansk-ulanude-batch73-2026-11-27.json",
+      "source_id": "b73-uu-avtomig",
+      "name": "Автомиг",
+      "address": "Республика Бурятия, Улан-Удэ, ул. Трактовая, 9А",
+      "phone": "+73012242484",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://ulan-ude.big-book-avto.ru/gruzovoy-shinomontazh/",
+        "https://bur.auto2.info/ulan-ude/avtomig-155386/"
+      ],
+      "notes": "На этом же адресе Техмаш с другим номером; отдельную карточку пока не добавлять.",
+      "timezone": "Asia/Irkutsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b73-uu-avtomaster",
+      "source_file": "sto-r258-slyudyanka-baykalsk-kabansk-ulanude-batch73-2026-11-27.json",
+      "source_id": "b73-uu-avtomaster",
+      "name": "АвтоМастер",
+      "address": "Республика Бурятия, Улан-Удэ, ул. Тулаева, 252/2",
+      "phone": "+79146353540",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://ulan-ude.big-book-avto.ru/gruzovoy-shinomontazh/"
+      ],
+      "notes": "График и тяжелый профиль уточнить.",
+      "timezone": "Asia/Irkutsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b73-uu-godzilla",
+      "source_file": "sto-r258-slyudyanka-baykalsk-kabansk-ulanude-batch73-2026-11-27.json",
+      "source_id": "b73-uu-godzilla",
+      "name": "Godzilla",
+      "address": "Республика Бурятия, Улан-Удэ, ул. Жердева, 10А, к. 2",
+      "phone": "+79025622771",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://urbanplaces.su/ru_respublika-buryatiya/ulan-ude-gorodskoj-okrug-ulan-ude/category-remont-gruzovyih-avtomobilej"
+      ],
+      "notes": "Уточнить услуги, график и действующий статус.",
+      "timezone": "Asia/Irkutsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b74-pit-stop",
+      "source_file": "sto-r258-petrovsk-khilok-chita-batch74-2026-11-27.json",
+      "source_id": "b74-pit-stop",
+      "name": "Pit-stop",
+      "address": "Забайкальский край, Чита, ул. Рахова, 149",
+      "phone": "+79141439993",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://chita.spravker.ru/kruglosutochnyi-gruzovoi-shinomontazh/",
+        "https://chita.spravker.ru/org/pit-stop.htm"
+      ],
+      "notes": "Рубрики справочника, наличие грузового оборудования и фактический график уточнить.",
+      "timezone": "Asia/Chita",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b74-entuziastov",
+      "source_file": "sto-r258-petrovsk-khilok-chita-batch74-2026-11-27.json",
+      "source_id": "b74-entuziastov",
+      "name": "Шиномонтаж",
+      "address": "Забайкальский край, Чита, ул. Энтузиастов, 42",
+      "phone": "+79242981926",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://chita.spravker.ru/kruglosutochnyi-gruzovoi-shinomontazh/",
+        "https://chita.spravker.ru/org/shinomontazh22.htm"
+      ],
+      "notes": "Проверить максимальный размер колес и прием тяжелых тягачей.",
+      "timezone": "Asia/Chita",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b74-kochetkova",
+      "source_file": "sto-r258-petrovsk-khilok-chita-batch74-2026-11-27.json",
+      "source_id": "b74-kochetkova",
+      "name": "Шиномонтаж",
+      "address": "Забайкальский край, Чита, ул. Кочеткова, 60",
+      "phone": "+79145211260",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://chita.spravker.ru/kruglosutochnyi-gruzovoi-shinomontazh/"
+      ],
+      "notes": "Круглосуточная рубрика без явного графика: не маркировать 24/7.",
+      "timezone": "Asia/Chita",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b74-ugdan",
+      "source_file": "sto-r258-petrovsk-khilok-chita-batch74-2026-11-27.json",
+      "source_id": "b74-ugdan",
+      "name": "Шиномонтажная мастерская",
+      "address": "Забайкальский край, с. Угдан, ул. Набережная, 15Е",
+      "phone": "+79248188189",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://chita.spravker.ru/kruglosutochnyi-gruzovoi-shinomontazh/",
+        "https://chita.spravker.ru/org/shinomontazhnaya-masterskaya6.htm"
+      ],
+      "notes": "Уточнить фактический график, оборудование и въезд.",
+      "timezone": "Asia/Chita",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b74-oktyabr",
+      "source_file": "sto-r258-petrovsk-khilok-chita-batch74-2026-11-27.json",
+      "source_id": "b74-oktyabr",
+      "name": "Октябрь",
+      "address": "Забайкальский край, Чита, ул. Геодезическая, 2Б",
+      "phone": "+79242736060",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://chita.spravker.ru/kruglosutochnyi-gruzovoi-shinomontazh/"
+      ],
+      "notes": "Несмотря на рубрику 24 часа, опубликован дневной график. Грузовая мойка не подтверждена.",
+      "timezone": "Asia/Chita",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b74-gruz-standart",
+      "source_file": "sto-r258-petrovsk-khilok-chita-batch74-2026-11-27.json",
+      "source_id": "b74-gruz-standart",
+      "name": "Грузовой стандарт",
+      "address": "Забайкальский край, Чита, 1-я Новопроточная ул., 4, стр. 1",
+      "phone": "+73022212144",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://rting.ru/chita/co/gruzovoj_standart/308131"
+      ],
+      "notes": "В справочнике есть соседний корпус 5 под тем же названием: не считать отдельно до уточнения.",
+      "timezone": "Asia/Chita",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b74-cargo-wash",
+      "source_file": "sto-r258-petrovsk-khilok-chita-batch74-2026-11-27.json",
+      "source_id": "b74-cargo-wash",
+      "name": "ГрузоваяМойка",
+      "address": "Забайкальский край, Чита, Автомобильный проезд, 40, стр. 3",
+      "phone": "+79245145577",
+      "evidence": "owner_confirmed_map_and_business_site",
+      "source_urls": [
+        "https://yandex.com/maps/org/gruzovayamoyka/55888828860/",
+        "https://gruzovajamojka.clients.site/"
+      ],
+      "notes": "Картографическая карточка содержит отметку проверки владельцем, не равнозначную проверке TrakSOS. Есть отзывы 2025 года. Фактическую работу и габариты бокса уточнить.",
+      "timezone": "Asia/Chita",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b75-nerchinsk-tire",
+      "source_file": "sto-r297-chernyshevsk-mogocha-skovorodino-magdagachi-batch75-2026-11-27.json",
+      "source_id": "b75-nerchinsk-tire",
+      "name": "Шиномонтаж и дископрав",
+      "address": "Забайкальский край, Нерчинск, ул. Октябрьская, 148Б",
+      "phone": "+79144692921",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://www.google.com/maps/search/?api=1&query=Грузовой+шиномонтаж+Нерчинск+Октябрьская+148Б&query_place_id=ChIJA44lBXZszV0RIUYKwBKDcN4"
+      ],
+      "notes": "Грузовой профиль явно указан в названии карточки; график, въезд, оснастку подтвердить.",
+      "timezone": "Asia/Chita",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b75-skovorodino-dalnoboy",
+      "source_file": "sto-r297-chernyshevsk-mogocha-skovorodino-magdagachi-batch75-2026-11-27.json",
+      "source_id": "b75-skovorodino-dalnoboy",
+      "name": "Дальнобойщик",
+      "address": "Амурская область, Сковородино, ул. Партизанская, 35А",
+      "phone": "+79243422023",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://blagoveshensk.spravker.ru/gorod-skovorodino/org/dalnoboishchik.htm",
+        "https://skovorodino.jsprav.ru/avto-moto/shinomontazhdalnobojschik/"
+      ],
+      "notes": "Два каталога совпадают по телефону и адресу. Выезд и ремонт тягачей уточнить.",
+      "timezone": "Asia/Chita",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b75-amurskoe-r297",
+      "source_file": "sto-r297-chernyshevsk-mogocha-skovorodino-magdagachi-batch75-2026-11-27.json",
+      "source_id": "b75-amurskoe-r297",
+      "name": "Шиномонтажная мастерская",
+      "address": "Амурская область, с. Амурское, Р-297, 1536-й км, 2",
+      "phone": "+79145798150",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://totadres.ru/amurskaya_oblast/org/shinomontazhnaya_masterskaya/4527871"
+      ],
+      "notes": "Прямо указаны выезд и грузовой профиль. Проверить фактический график и точный въезд.",
+      "timezone": "Asia/Chita",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b75-mogocha-grass",
+      "source_file": "sto-r297-chernyshevsk-mogocha-skovorodino-magdagachi-batch75-2026-11-27.json",
+      "source_id": "b75-mogocha-grass",
+      "name": "Grass",
+      "address": "Забайкальский край, Могоча, ул. Плясова, 1",
+      "phone": "+79144635591",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://mogocha.jsprav.ru/avtomojki/grass/"
+      ],
+      "notes": "Грузовая мойка указана в видах деятельности каталога; размеры бокса и текущая работа не подтверждены. Не считать ремонт подтвержденным.",
+      "timezone": "Asia/Chita",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    }
+  ],
+  "notes": "Draft only. Coordinates and activity not verified; conservative duplicate screening is not exhaustive."
+}

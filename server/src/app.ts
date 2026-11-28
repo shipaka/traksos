@@ -45,6 +45,7 @@ import { OpsService } from './services/ops.ts';
 import { OnsiteService } from './services/onsite.ts';
 import { ServiceCenters } from './services/service.ts';
 import { PublicPartnerMap } from './services/publicPartnerMap.ts';
+import { StoDirectory } from './services/stoDirectory.ts';
 import { FleetService } from './services/fleet.ts';
 import { clientCalendar, performerCalendar } from './services/clientCalendar.ts';
 import { VehicleServiceRequests } from './services/vehicleServiceRequests.ts';
@@ -142,6 +143,7 @@ export function createApp(d: Deps) {
   orders.ops = ops;
   const centers = new ServiceCenters(d.db, notifier, settings, support, now);
   const publicPartnerMap = new PublicPartnerMap(d.db);
+  const stoDirectory = new StoDirectory(d.db);
   const referral = new ReferralService(d.db, settings, notifier, now);
   referral.ledger = payments.ledger.bind(payments);
   orders.referral = referral;
@@ -173,6 +175,29 @@ export function createApp(d: Deps) {
   // Public network coverage is opt-in, stationary-only and actually verified.
   // All existing entries default to private; no current mobile performer GPS.
   r.get('/api/public/partner-map', false, () => publicPartnerMap.list());
+  r.get('/api/public/sto-directory', false, () => stoDirectory.publicList());
+  r.get('/api/admin/sto-directory', ['admin'], (c:AuthedCtx) => {
+    const after=c.query.get('after')??'';
+    const limit=parse(z.coerce.number().int().min(1).max(200),c.query.get('limit')??100);
+    if(after.length>120)throw bad('invalid_cursor');
+    const search=parse(z.string().max(200),c.query.get('q')??'');
+    const state=parse(z.enum(['','draft','published','hidden']),c.query.get('state')??'');
+    const category=parse(z.enum(['','sto','tyre','wash','refrigeration','trailer']),c.query.get('category')??'');
+    return stoDirectory.adminList(after,limit,search,state,category,c.query.get('missingGps')==='1');
+  });
+  r.get('/api/admin/sto-directory/geocode-queue', ['admin'], (c:AuthedCtx) => {
+    const after=parse(z.string().max(120),c.query.get('after')??'');
+    const limit=parse(z.coerce.number().int().min(1).max(100),c.query.get('limit')??100);
+    return stoDirectory.geocodeQueue(after,limit);
+  });
+  r.post('/api/admin/sto-directory/geocode-results', ['admin'], (c:AuthedCtx) => stoDirectory.importGeocodes(c.body));
+  r.get('/api/admin/sto-directory/pilot', ['admin'], () => stoDirectory.pilotPreview());
+  r.post('/api/admin/sto-directory/publish-pilot', ['admin'], (c:AuthedCtx) => stoDirectory.publishPilot(c.user,c.body));
+  r.post('/api/admin/sto-directory/publish-reviewed', ['admin'], (c:AuthedCtx) => stoDirectory.publishReviewed(c.user,c.body));
+  r.post('/api/admin/sto-directory/import', ['admin'], (c:AuthedCtx) => stoDirectory.create(c.body));
+  r.put('/api/admin/sto-directory/:id', ['admin'], (c:AuthedCtx) => stoDirectory.edit(c.params.id,c.body));
+  r.put('/api/admin/sto-directory/:id/review', ['admin'], (c:AuthedCtx) => stoDirectory.review(c.params.id,c.user,c.body));
+  r.put('/api/sto-directory/:id/feedback', true, (c:AuthedCtx) => stoDirectory.feedback(c.params.id,c.user,c.body));
   r.put('/api/service/public-map', ['service'], (c: AuthedCtx) => {
     const b = parse(z.object({ enabled:z.boolean() }), c.body);
     return publicPartnerMap.visibility(c.user,b.enabled);

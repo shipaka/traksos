@@ -10,6 +10,7 @@ import { AdminSettings } from './adminSettings.tsx';
 import { AdminDiagnostics } from './adminDiagnostics.tsx';
 import { AdminAccountAccess } from './adminAccountAccess.tsx';
 import { AdminRegistry } from './adminRegistry.tsx';
+import { AdminStoDirectory } from './adminStoDirectory20261127.tsx';
 import { AdminServiceFinance } from './adminServiceFinance.tsx';
 import { useState } from 'react';
 import { useEffect } from 'react';
@@ -22,7 +23,7 @@ import { STATUS, SERVICES, LINE } from '../dict.ts';
 import { useLoad, useAction, Loading } from '../ui.tsx';
 import { TRAKBOT_TERMS, type TrakBotOfferAudience } from '../trakbotTerms.ts';
 
-type AdminSection = 'ecu' | 'cases' | 'stats' | 'search' | 'support' | 'verify' | 'people' | 'access' | 'orders' | 'dispatch' | 'payments' | 'offers' | 'flagged' | 'bases' | 'queue' | 'summary' | 'settings' | 'demand' | 'announcements' | 'vehicleServices' | 'diagnostics' | 'serviceFinance' | 'registry';
+type AdminSection = 'ecu' | 'cases' | 'stats' | 'search' | 'support' | 'verify' | 'people' | 'access' | 'orders' | 'dispatch' | 'payments' | 'offers' | 'flagged' | 'bases' | 'queue' | 'summary' | 'settings' | 'demand' | 'announcements' | 'vehicleServices' | 'diagnostics' | 'serviceFinance' | 'registry' | 'stoDirectory';
 type AdminNavItem = { id: AdminSection; name: string; description: string; symbol: string };
 const ADMIN_GROUPS: { name: string; items: AdminNavItem[] }[] = [
   { name: 'Операционная работа', items: [
@@ -41,6 +42,7 @@ const ADMIN_GROUPS: { name: string; items: AdminNavItem[] }[] = [
     { id: 'access', name: 'Регистрация и доступы', description: 'Создать учётную запись, выбрать роли и передать проблему разработчику', symbol: '08+' },
     { id: 'verify', name: 'Проверка', description: 'Документы и допуск исполнителей', symbol: '09' },
     { id: 'bases', name: 'Рембазы', description: 'Партнёрские станции ремонта', symbol: '10' },
+    { id: 'stoDirectory', name: 'Справочник СТО', description: 'Сторонние площадки, адреса, координаты и отзывы', symbol: 'СТО' },
     { id: 'ecu', name: 'Стационарные ЭБУ', description: 'Проверка адресов ремонтников электронных блоков', symbol: '10+' },
     { id: 'vehicleServices', name: 'Страхование и ТО', description: 'Заявки и контроль партнёров', symbol: '11' },
   ] },
@@ -139,6 +141,7 @@ export function Admin({ initialSection }: { initialSection?: string }) {
             {tab === 'support' && <SupportQueue />}
             {tab === 'verify' && <Verify />}
             {tab === 'bases' && <AdminServices />}
+            {tab === 'stoDirectory' && <AdminStoDirectory />}
             {tab === 'ecu' && <EcuAdminStations />}
             {tab === 'queue' && <ModQueue />}
             {tab === 'summary' && <AdminSummary />}

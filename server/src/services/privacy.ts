@@ -213,6 +213,7 @@ export class PrivacyService {
         await q.query('delete from push_tokens where user_id=$1', [id]);
         await q.query('update vehicles set driver_id=null where driver_id=$1', [id]);
         await q.query('delete from notifications where user_id=$1', [id]);
+        await q.query('delete from sto_directory_feedback where user_id=$1', [id]);
         await q.query(`update performer_profiles set inn=null, cars='[]', car=null, paused=true where user_id=$1`, [id]);
         await q.query('insert into audit_log(actor_id, action, target, data) values (null,$1,$2,$3)', ['privacy.deleted', id, {}]);
         return true;

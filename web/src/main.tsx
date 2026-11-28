@@ -662,6 +662,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
          ['/admin/section/access', 'Регистрация и доступы'],
          ['/admin/section/verify', 'Проверка исполнителей'],
          ['/admin/section/bases', 'СТО и рембазы'],
+         ['/admin/section/stoDirectory', 'Справочник сторонних СТО'],
          ['/admin/section/payments', 'Деньги и выплаты'],
          ['/admin/section/stats', 'Статистика'],
          ['/admin/section/demand', 'Проблемные и невыполненные заявки'],

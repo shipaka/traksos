@@ -1,0 +1,1262 @@
+{
+  "schema": "sto-regional-import-audit-v1",
+  "previous_drafts": 988,
+  "source_rows": 73,
+  "added_drafts": 70,
+  "held_count": 3,
+  "expected_drafts": 1058,
+  "source_coordinates": 47,
+  "missing_coordinates": 1011,
+  "byCategory": {
+    "sto": 49,
+    "tyre": 17,
+    "trailer": 4
+  },
+  "byBatch": {
+    "sto-vladimir-m7-m12-batch60": {
+      "input": 12,
+      "added": 12,
+      "held": 0
+    },
+    "sto-nizhny-dzerzhinsk-kstovo-arzamas-batch61": {
+      "input": 7,
+      "added": 6,
+      "held": 1
+    },
+    "sto-chuvashia-tatarstan-m7-batch62": {
+      "input": 12,
+      "added": 12,
+      "held": 0
+    },
+    "sto-tatarstan-elabuga-nizhnekamsk-batch63": {
+      "input": 8,
+      "added": 8,
+      "held": 0
+    },
+    "sto-bashkortostan-m5-m7-batch64": {
+      "input": 7,
+      "added": 7,
+      "held": 0
+    },
+    "sto-chelyabinsk-m5-batch65": {
+      "input": 12,
+      "added": 12,
+      "held": 0
+    },
+    "sto-kurgan-kopeysk-shadrinsk-batch66": {
+      "input": 5,
+      "added": 5,
+      "held": 0
+    },
+    "sto-tyumen-omsk-r402-r254-batch67": {
+      "input": 6,
+      "added": 4,
+      "held": 2
+    },
+    "sto-novosibirsk-r254-barabinsk-batch68": {
+      "input": 4,
+      "added": 4,
+      "held": 0
+    }
+  },
+  "byRegion": {
+    "Владимирская область": 12,
+    "Нижегородская область": 6,
+    "Республика Татарстан": 13,
+    "Чувашская Республика": 7,
+    "Республика Башкортостан": 7,
+    "Челябинская область": 14,
+    "Курганская область": 3,
+    "Тюменская область": 4,
+    "Новосибирская область": 4
+  },
+  "held": [
+    {
+      "source_file": "sto-nizhny-dzerzhinsk-kstovo-arzamas-batch61-2026-11-27.json",
+      "source_id": "b61-retruck-kstovo",
+      "name": "Ретрак — Кстово",
+      "address": "Нижегородская область, Кстово, ул. Магистральная, 1",
+      "phone": null,
+      "reason": "incomplete_or_invalid",
+      "existing": null
+    },
+    {
+      "source_file": "sto-tyumen-omsk-r402-r254-batch67-2026-11-27.json",
+      "source_id": "b67-ks-troitskoe",
+      "name": "КС-Сибирь — Троицкое",
+      "address": "Омская область, с. Троицкое, ул. Автотранспортная, 5В",
+      "phone": "+79658782783",
+      "reason": "duplicate_id",
+      "existing": null
+    },
+    {
+      "source_file": "sto-tyumen-omsk-r402-r254-batch67-2026-11-27.json",
+      "source_id": "b67-ks-druzhino",
+      "name": "КС-Сибирь — Дружино",
+      "address": "Омская область, с. Дружино, ул. Придорожная, стр. 62",
+      "phone": "+79139765205",
+      "reason": "duplicate_id",
+      "existing": null
+    }
+  ],
+  "provenance": [
+    {
+      "id": "directory:research-b60-dembiki",
+      "source_file": "sto-vladimir-m7-m12-batch60-2026-11-27.json",
+      "source_id": "b60-dembiki",
+      "name": "Дембики",
+      "address": "Владимирская область, Собинский район, М7, 166-й км",
+      "phone": "+79209405624",
+      "evidence": "business_first_party_website",
+      "source_urls": [
+        "https://dembiki-sto.ru/"
+      ],
+      "notes": "Проверить совпадение с возможным прежним названием Техцентр Магистраль М7.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b60-shinaservis-kovrov",
+      "source_file": "sto-vladimir-m7-m12-batch60-2026-11-27.json",
+      "source_id": "b60-shinaservis-kovrov",
+      "name": "Шина-Сервис Владимир — Ковров",
+      "address": "Владимирская область, д. Сенинские Дворики, 19, М7, 246-й км",
+      "phone": "+79209052555",
+      "evidence": "business_first_party_website",
+      "source_urls": [
+        "https://shinaservis.com/kontakty/",
+        "https://www.shinaservis.com/o-nas/",
+        "https://yandex.com/maps/org/shina_servis/130899633085/"
+      ],
+      "notes": "Корпоративная почта общая для сети, указанная специально для предложений о сотрудничестве.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b60-shinaservis-murom",
+      "source_file": "sto-vladimir-m7-m12-batch60-2026-11-27.json",
+      "source_id": "b60-shinaservis-murom",
+      "name": "Шина-Сервис Владимир / ПетроМастер — Муром",
+      "address": "Владимирская область, Муром, Меленковское шоссе, 2Б",
+      "phone": "+79209254747",
+      "evidence": "business_first_party_website",
+      "source_urls": [
+        "https://shinaservis.com/kontakty/",
+        "https://www.shinaservis.com/o-nas/",
+        "https://murom.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "ПетроМастер и Cordiant Professional фигурируют по тому же адресу; одна площадка до проверки, круглосуточность не подтверждена.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b60-vyazniki-tent",
+      "source_file": "sto-vladimir-m7-m12-batch60-2026-11-27.json",
+      "source_id": "b60-vyazniki-tent",
+      "name": "Ремонт тентов",
+      "address": "Владимирская область, Вязники, ул. Ефимьево, 49А",
+      "phone": "+79308099900",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://viazniki.spravker.ru/remont-pritsepov/",
+        "https://vyazniki.jsprav.ru/vnedorozhniki/remont-tentov/",
+        "https://uslugi.yandex.ru/profile/RemontTentov-841585?occupationId=%2Fremont-avto&specId=4879"
+      ],
+      "notes": "Специализация подтверждается профилем услуг; часы уточнить.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b60-vyazniki-bratya",
+      "source_file": "sto-vladimir-m7-m12-batch60-2026-11-27.json",
+      "source_id": "b60-vyazniki-bratya",
+      "name": "Братья",
+      "address": "Владимирская область, Вязники, ул. Ленина, 48",
+      "phone": "+79157981821",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://viazniki.spravker.ru/remont-pritsepov/",
+        "https://avtoservis-gid.ru/komp/bratya-vyazniki/"
+      ],
+      "notes": "Низкая уверенность в тяжёлом грузовом профиле: обязательное уточнение до публикации.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b60-likhaya-pozhnya",
+      "source_file": "sto-vladimir-m7-m12-batch60-2026-11-27.json",
+      "source_id": "b60-likhaya-pozhnya",
+      "name": "Автосервис — Лихая Пожня",
+      "address": "Владимирская область, д. Лихая Пожня, ул. Шоссейная, 9",
+      "phone": "+79209156022",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://viazniki.spravker.ru/remont-pritsepov/"
+      ],
+      "notes": "Название оператора и грузовой профиль уточнить.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b60-vyazniki-ryabinovaya",
+      "source_file": "sto-vladimir-m7-m12-batch60-2026-11-27.json",
+      "source_id": "b60-vyazniki-ryabinovaya",
+      "name": "Шиномонтаж — Рябиновая",
+      "address": "Владимирская область, Вязники, ул. Рябиновая, 12",
+      "phone": "+79209304442",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://viazniki.spravker.ru/remont-pritsepov/"
+      ],
+      "notes": "Грузовые размеры колес и прием полуприцепов уточнить.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b60-vyazniki-m7-294",
+      "source_file": "sto-vladimir-m7-m12-batch60-2026-11-27.json",
+      "source_id": "b60-vyazniki-m7-294",
+      "name": "Шиномонтаж — М7, 294-й км",
+      "address": "Владимирская область, МО Вязники, М7, 294-й км, 296",
+      "phone": "+79190130989",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://viazniki.spravker.ru/remont-pritsepov/",
+        "https://viazniki.spravker.ru/shinomontazh/",
+        "https://spravbiz.ru/vyazniki/avto/gruzovoj-shinomontazh/"
+      ],
+      "notes": "Уточнить точный въезд и размеры колес.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b60-vyazniki-sverdlova",
+      "source_file": "sto-vladimir-m7-m12-batch60-2026-11-27.json",
+      "source_id": "b60-vyazniki-sverdlova",
+      "name": "Автосервис — Свердлова",
+      "address": "Владимирская область, Вязники, ул. Свердлова, 48",
+      "phone": "+79995174444",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://viazniki.spravker.ru/remont-pritsepov/"
+      ],
+      "notes": "Низкая уверенность в грузовом профиле; уточнить название оператора.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b60-gorokhovets-gagarina45",
+      "source_file": "sto-vladimir-m7-m12-batch60-2026-11-27.json",
+      "source_id": "b60-gorokhovets-gagarina45",
+      "name": "Грузовой автосервис",
+      "address": "Владимирская область, Гороховец, ул. Гагарина, 45",
+      "phone": "+79527888170",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://gorokhovets.spravker.ru/remont-gruzovykh-avtomobilei/",
+        "https://e-avtozapis.ru/tochka/gorohovets"
+      ],
+      "notes": "График подтвердить; не смешивать с ПМК на Гагарина, 36.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b60-murom-asparta",
+      "source_file": "sto-vladimir-m7-m12-batch60-2026-11-27.json",
+      "source_id": "b60-murom-asparta",
+      "name": "Аспарта",
+      "address": "Владимирская область, Муром, Владимирское шоссе, 5",
+      "phone": "+79107707175",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://murom.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Уточнить прием тяжелых грузовиков именно этим филиалом.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b60-murom-stakhanovskaya",
+      "source_file": "sto-vladimir-m7-m12-batch60-2026-11-27.json",
+      "source_id": "b60-murom-stakhanovskaya",
+      "name": "Шиномонтаж — Стахановская",
+      "address": "Владимирская область, Муром, ул. Стахановская, 8Б",
+      "phone": "+79802263674",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://murom.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Уточнить оборудование и название оператора.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b61-mehservice-dz",
+      "source_file": "sto-nizhny-dzerzhinsk-kstovo-arzamas-batch61-2026-11-27.json",
+      "source_id": "b61-mehservice-dz",
+      "name": "Мехсервис",
+      "address": "Нижегородская область, Дзержинск, просп. Ленина, 107Б",
+      "phone": "+79861788572",
+      "evidence": "business_first_party_website",
+      "source_urls": [
+        "https://mehservice.com/"
+      ],
+      "notes": "ООО Партс-Трейд указано на сайте. Проверить реквизиты.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b61-avtolux-dz",
+      "source_file": "sto-nizhny-dzerzhinsk-kstovo-arzamas-batch61-2026-11-27.json",
+      "source_id": "b61-avtolux-dz",
+      "name": "Автолюкс НН — Дзержинск",
+      "address": "Нижегородская область, Дзержинск, М7, 384-й км, 1/1",
+      "phone": "+79036050007",
+      "evidence": "business_first_party_website",
+      "source_urls": [
+        "https://xn--80aeydlad0af6j.xn--p1ai/"
+      ],
+      "notes": "ИНН 5258156925 и ОГРН 1235200032968 заявлены на сайте. Круглосуточная эвакуация не означает круглосуточный ремонт.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b61-avtolux-kstovo",
+      "source_file": "sto-nizhny-dzerzhinsk-kstovo-arzamas-batch61-2026-11-27.json",
+      "source_id": "b61-avtolux-kstovo",
+      "name": "Автолюкс НН — Кстово",
+      "address": "Нижегородская область, Кстово, Промышленный район, микрорайон Восточный",
+      "phone": "+79036050008",
+      "evidence": "business_first_party_website",
+      "source_urls": [
+        "https://xn--80aeydlad0af6j.xn--p1ai/"
+      ],
+      "notes": "Номер здания и координаты въезда уточнить. Общая почта оператора.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b61-asc-dz-lenina",
+      "source_file": "sto-nizhny-dzerzhinsk-kstovo-arzamas-batch61-2026-11-27.json",
+      "source_id": "b61-asc-dz-lenina",
+      "name": "АвтоЦентр-НН — Ленина",
+      "address": "Нижегородская область, Дзержинск, просп. Ленина, 108Б",
+      "phone": "+79519076216",
+      "evidence": "business_first_party_website",
+      "source_urls": [
+        "https://asc-nn.ru/"
+      ],
+      "notes": "Сайт прямо выделяет две территории; Игумново уже в batch37. Проверить часы и условия приема.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b61-kom-avto-arz",
+      "source_file": "sto-nizhny-dzerzhinsk-kstovo-arzamas-batch61-2026-11-27.json",
+      "source_id": "b61-kom-avto-arz",
+      "name": "Ком-Авто",
+      "address": "Нижегородская область, Арзамас, ул. Калинина, 58",
+      "phone": "+79200140062",
+      "evidence": "business_first_party_website",
+      "source_urls": [
+        "https://kom-avto.ru/contacts",
+        "https://kom-avto.ru/truckrepairs",
+        "https://arzamas.spravker.ru/remont-pritsepov/"
+      ],
+      "notes": "На сайте офис 108; въезд в ремонтный цех подтвердить. Не использовать номер перевозок как сервисный.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b61-garantia-arz",
+      "source_file": "sto-nizhny-dzerzhinsk-kstovo-arzamas-batch61-2026-11-27.json",
+      "source_id": "b61-garantia-arz",
+      "name": "Гарантия",
+      "address": "Нижегородская область, Арзамас, ул. Калинина, 68М",
+      "phone": "+79302927772",
+      "evidence": "business_first_party_website",
+      "source_urls": [
+        "https://garantia-arz.ru/",
+        "https://psg-apz.ru/autoservice/",
+        "https://arzamas.spravker.ru/remont-pritsepov/"
+      ],
+      "notes": "Проверить прием тяжелых сцепок, график и оператора.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b62-signal",
+      "source_file": "sto-chuvashia-tatarstan-m7-batch62-2026-11-27.json",
+      "source_id": "b62-signal",
+      "name": "Сигналдортранс",
+      "address": "Республика Татарстан, Набережные Челны, Трубный проезд, 37",
+      "phone": "+78552396237",
+      "evidence": "business_first_party_website",
+      "source_urls": [
+        "https://signaldortrans.ru/page6.html"
+      ],
+      "notes": "Круглосуточный телефон не равен круглосуточному ремонту.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b62-tst",
+      "source_file": "sto-chuvashia-tatarstan-m7-batch62-2026-11-27.json",
+      "source_id": "b62-tst",
+      "name": "ТехСервисТрейлер",
+      "address": "Республика Татарстан, Набережные Челны, Индустриальный проезд, 31",
+      "phone": "+78552537537",
+      "evidence": "business_first_party_website",
+      "source_urls": [
+        "https://xn--80adfjjn8b.xn--p1ai/servisnoe-obsluzhivanie/"
+      ],
+      "notes": "Специализированный ремонт надстроек.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b62-truckeuro",
+      "source_file": "sto-chuvashia-tatarstan-m7-batch62-2026-11-27.json",
+      "source_id": "b62-truckeuro",
+      "name": "ТракЕвроСервис",
+      "address": "Республика Татарстан, Набережные Челны, Мензелинский тракт, 23",
+      "phone": "+78552473005",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://urbanplaces.su/ru_respublika-tatarstan/naberezhnyie-chelnyi-gorodskoj-okrug-naberezhnyie-chelnyi/card-1388709-trakevroservis"
+      ],
+      "notes": "В справочнике другая мастерская по тому же адресу; проверить оператора и отдельность боксов.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b62-rek",
+      "source_file": "sto-chuvashia-tatarstan-m7-batch62-2026-11-27.json",
+      "source_id": "b62-rek",
+      "name": "РЭК",
+      "address": "Республика Татарстан, Набережные Челны, Трубный проезд, 65А",
+      "phone": "+79061114094",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://orgzz.ru/naberezhnye_chelny/co/rek/4540192"
+      ],
+      "notes": "Уточнить юридическое название.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b62-chebtrak",
+      "source_file": "sto-chuvashia-tatarstan-m7-batch62-2026-11-27.json",
+      "source_id": "b62-chebtrak",
+      "name": "ЧебТракСервис",
+      "address": "Чувашская Республика, Чебоксары, Лапсарский проезд, 9",
+      "phone": "+79196586321",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://cheboksary.spravka.city/company/chebtrakservis"
+      ],
+      "notes": "Номера опубликованы в карточке в ссылках WhatsApp.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b62-rembaza",
+      "source_file": "sto-chuvashia-tatarstan-m7-batch62-2026-11-27.json",
+      "source_id": "b62-rembaza",
+      "name": "РемБаза",
+      "address": "Чувашская Республика, Чебоксары, Лапсарский проезд, 11/1",
+      "phone": "+79003333901",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://totadres.ru/cheboksary/org/rembaza/3704539"
+      ],
+      "notes": "Проверить точный въезд.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b62-milya",
+      "source_file": "sto-chuvashia-tatarstan-m7-batch62-2026-11-27.json",
+      "source_id": "b62-milya",
+      "name": "Миля",
+      "address": "Чувашская Республика, Чебоксары, Лапсарский проезд, 11/2",
+      "phone": "+79623215454",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://cheboksary.spravka.city/company/milya-59"
+      ],
+      "notes": "Номер указан в ссылке WhatsApp. Соседняя РемБаза имеет другой адрес и номер.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b62-autodiesel",
+      "source_file": "sto-chuvashia-tatarstan-m7-batch62-2026-11-27.json",
+      "source_id": "b62-autodiesel",
+      "name": "Авто-Дизель",
+      "address": "Чувашская Республика, Чебоксары, Монтажный проезд, 6",
+      "phone": "+78352220333",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://car.ms/autoservices/truck-service/cheboksary/"
+      ],
+      "notes": "Справочник указывает сайт auto-dizel21.ru; актуальность контакта проверить.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b62-autostart",
+      "source_file": "sto-chuvashia-tatarstan-m7-batch62-2026-11-27.json",
+      "source_id": "b62-autostart",
+      "name": "Автостарт",
+      "address": "Чувашская Республика, Чебоксары, проезд Машиностроителей, 1Ш",
+      "phone": "+79176679969",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://car.ms/autoservices/truck-service/cheboksary/"
+      ],
+      "notes": "Профиль конкретных марок уточнить.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b62-autotrak",
+      "source_file": "sto-chuvashia-tatarstan-m7-batch62-2026-11-27.json",
+      "source_id": "b62-autotrak",
+      "name": "Автотраксервис",
+      "address": "Чувашская Республика, Чебоксары, Канашское шоссе, 5, корп. 1",
+      "phone": "+78352325501",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://car.ms/autoservices/truck-service/cheboksary/"
+      ],
+      "notes": "Размеры и марки обслуживаемой техники уточнить.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b62-grand",
+      "source_file": "sto-chuvashia-tatarstan-m7-batch62-2026-11-27.json",
+      "source_id": "b62-grand",
+      "name": "ГрандАвто",
+      "address": "Чувашская Республика, Чебоксары, ул. Шоршелская, 10/1",
+      "phone": "+79278546630",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://car.ms/autoservices/truck-service/cheboksary/"
+      ],
+      "notes": "Круглосуточность не подтверждена.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b62-m7-808",
+      "source_file": "sto-chuvashia-tatarstan-m7-batch62-2026-11-27.json",
+      "source_id": "b62-m7-808",
+      "name": "Грузовой автосервис — М7, 808-й км",
+      "address": "Республика Татарстан, Казань, М7, 808-й км, 2",
+      "phone": "+78432909387",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://www.bizkontakte.com/грузовой-автосервис_12C-8-843-290-93-87"
+      ],
+      "notes": "Точное название оператора, фактический профиль и график уточнить; низкая уверенность.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b63-avtoregion",
+      "source_file": "sto-tatarstan-elabuga-nizhnekamsk-batch63-2026-11-27.json",
+      "source_id": "b63-avtoregion",
+      "name": "АвтоРегион",
+      "address": "Республика Татарстан, Нижнекамск, ул. Чистопольская, 50",
+      "phone": "+78555499966",
+      "evidence": "business_first_party_website",
+      "source_urls": [
+        "https://avtoregionservis.ru/contacts/",
+        "https://avtoregionservis.ru/services/remont-i-diagnostika/"
+      ],
+      "notes": "Адрес Первопроходцев, 5 на сайте указан также для склада и легкового шиномонтажа; не считать второй грузовой СТО.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b63-trackenergy",
+      "source_file": "sto-tatarstan-elabuga-nizhnekamsk-batch63-2026-11-27.json",
+      "source_id": "b63-trackenergy",
+      "name": "Трак Энерджи",
+      "address": "Республика Татарстан, Елабуга, М7, 1037-й км, 1",
+      "phone": "+79172203878",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://elabuga.spravker.ru/tekhnicheskoe-obsluzhivanie-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Режим работы и перечень ремонта подтвердить.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b63-elabuga-fuel",
+      "source_file": "sto-tatarstan-elabuga-nizhnekamsk-batch63-2026-11-27.json",
+      "source_id": "b63-elabuga-fuel",
+      "name": "Ремонт форсунок и ТНВД",
+      "address": "Республика Татарстан, Елабуга, Набережно-Челнинское шоссе, 4А",
+      "phone": "+79874151006",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://elabuga.spravker.ru/tekhnicheskoe-obsluzhivanie-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Агрегатная мастерская; подтвердить профиль и юридическое название. Возможны другие названия по тому же адресу.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b63-akvarius",
+      "source_file": "sto-tatarstan-elabuga-nizhnekamsk-batch63-2026-11-27.json",
+      "source_id": "b63-akvarius",
+      "name": "Аквариус",
+      "address": "Республика Татарстан, Елабуга, Окружное шоссе, 7Б",
+      "phone": "+78555726840",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://asktel.ru/elabuga/remont_dvigatelya/akvarius/",
+        "https://elabuga.spravker.ru/tekhnicheskoe-obsluzhivanie-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Уточнить габариты принимаемых автомобилей, режим и действующего оператора.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b63-mamadysh-gorkogo",
+      "source_file": "sto-tatarstan-elabuga-nizhnekamsk-batch63-2026-11-27.json",
+      "source_id": "b63-mamadysh-gorkogo",
+      "name": "Грузовой автосервис",
+      "address": "Республика Татарстан, Мамадыш, ул. Максима Горького, 124",
+      "phone": "+79274949059",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://mamadysh.spravker.ru/avtoservisy-avtotehcentry/"
+      ],
+      "notes": "Две карточки справочника с одинаковым телефоном объединены.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b63-nizhnekamsk-central",
+      "source_file": "sto-tatarstan-elabuga-nizhnekamsk-batch63-2026-11-27.json",
+      "source_id": "b63-nizhnekamsk-central",
+      "name": "Грузовой Автосервис",
+      "address": "Республика Татарстан, Нижнекамск, пос. Строителей, ул. Центральная, 49И",
+      "phone": "+79870023555",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://nizhnekamsk.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Уточнить название оператора и возможное совпадение с RiXX.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b63-nizhnekamsk-patp",
+      "source_file": "sto-tatarstan-elabuga-nizhnekamsk-batch63-2026-11-27.json",
+      "source_id": "b63-nizhnekamsk-patp",
+      "name": "РТК ПАТП-1",
+      "address": "Республика Татарстан, Нижнекамск, ул. Первопроходцев, 21",
+      "phone": "+79172931624",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://nizhnekamsk.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Уточнить прием сторонних грузовых автомобилей и грузовые габариты мойки.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b63-rn-almet",
+      "source_file": "sto-tatarstan-elabuga-nizhnekamsk-batch63-2026-11-27.json",
+      "source_id": "b63-rn-almet",
+      "name": "РН-Сервис",
+      "address": "Республика Татарстан, Альметьевск, Объездной тракт, 23/22",
+      "phone": "+79173945041",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://almetevsk.gdeservisy.ru/gruzovoy-autoservis-rn-servis"
+      ],
+      "notes": "Подтвердить действующее предприятие; справочник содержит ссылку на rn-service.com.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b64-geokon",
+      "source_file": "sto-bashkortostan-m5-m7-batch64-2026-11-27.json",
+      "source_id": "b64-geokon",
+      "name": "Геокон",
+      "address": "Республика Башкортостан, Иглинский район, М5, 1490-й км + 500 м",
+      "phone": "+79177976402",
+      "evidence": "business_first_party_website",
+      "source_urls": [
+        "https://www.geokonufa.ru/gruzovoy-avtoservis"
+      ],
+      "notes": "Сайт оператора подтверждает профиль; точность въезда и график уточнить.",
+      "timezone": "Asia/Yekaterinburg",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b64-ufa-central",
+      "source_file": "sto-bashkortostan-m5-m7-batch64-2026-11-27.json",
+      "source_id": "b64-ufa-central",
+      "name": "Грузовой автосервис — Центральная",
+      "address": "Республика Башкортостан, Уфа, ул. Центральная, 53",
+      "phone": "+79174642694",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://ufa.auto2.info/ufa/gruzovoy-avtoservis-422083/"
+      ],
+      "notes": "Телефон мастера опубликован в деловой карточке; название оператора и актуальность уточнить.",
+      "timezone": "Asia/Yekaterinburg",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b64-dyurtyuli-sedova",
+      "source_file": "sto-bashkortostan-m5-m7-batch64-2026-11-27.json",
+      "source_id": "b64-dyurtyuli-sedova",
+      "name": "Грузовой автосервис — Седова",
+      "address": "Республика Башкортостан, Дюртюли, ул. Седова, 26/2",
+      "phone": "+79177347347",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://ufa.spravker.ru/gorod-diurtiuli/avtoservisy-avtotehcentry/"
+      ],
+      "notes": "Соседний Автоцентр 26/1 имеет иной телефон; не считать отдельной грузовой СТО без подтверждения.",
+      "timezone": "Asia/Yekaterinburg",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b64-neftekamsk-kst",
+      "source_file": "sto-bashkortostan-m5-m7-batch64-2026-11-27.json",
+      "source_id": "b64-neftekamsk-kst",
+      "name": "КамаСпецТранс+",
+      "address": "Республика Башкортостан, Нефтекамск, ул. Магистральная, 17Д",
+      "phone": "+79177707920",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://neftekamsk.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Уточнить прием сторонних тяжелых тягачей.",
+      "timezone": "Asia/Yekaterinburg",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b64-oktyabrsky-hydro",
+      "source_file": "sto-bashkortostan-m5-m7-batch64-2026-11-27.json",
+      "source_id": "b64-oktyabrsky-hydro",
+      "name": "Гидроремсервис",
+      "address": "Республика Башкортостан, Октябрьский, ул. Северная, 38",
+      "phone": "+79270862860",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://ufa.spravker.ru/gorod-oktiabrskii/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Конкретные работы и прием грузовиков подтвердить.",
+      "timezone": "Asia/Yekaterinburg",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b64-oktyabrsky-perekrestok",
+      "source_file": "sto-bashkortostan-m5-m7-batch64-2026-11-27.json",
+      "source_id": "b64-oktyabrsky-perekrestok",
+      "name": "Перекресток Плюс",
+      "address": "Республика Башкортостан, Октябрьский, ул. Космонавтов, 1Г",
+      "phone": "+79273393193",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://ufa.spravker.ru/gorod-oktiabrskii/remont-gruzovykh-avtomobilei/",
+        "https://oktyabrsky.big-book-avto.ru/avtoservisy/"
+      ],
+      "notes": "Габариты и доступные грузовые работы уточнить.",
+      "timezone": "Asia/Yekaterinburg",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b64-tuimazy-remtech",
+      "source_file": "sto-bashkortostan-m5-m7-batch64-2026-11-27.json",
+      "source_id": "b64-tuimazy-remtech",
+      "name": "РемТехСервис",
+      "address": "Республика Башкортостан, Туймазы, ул. Гафурова, 40, стр. 4",
+      "phone": "+73478265444",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://urbanplaces.su/ru_respublika-bashkortostan/tujmazinskij-rajon-tujmazyi/card-1744294-remtehservis",
+        "https://tuimazy.spravker.ru/remont-pritsepov/"
+      ],
+      "notes": "Также карточка Дорагроснаб по тому же адресу; не добавлять отдельно. Основное наименование в источнике магазин запчастей; наличие действующего ремонтного цеха подтвердить.",
+      "timezone": "Asia/Yekaterinburg",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b65-sim-gaidara",
+      "source_file": "sto-chelyabinsk-m5-batch65-2026-11-27.json",
+      "source_id": "b65-sim-gaidara",
+      "name": "Автосервис — Гайдара",
+      "address": "Челябинская область, Сим, ул. Гайдара, 30А",
+      "phone": "+79227001916",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://sim.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Две карточки по адресу объединены; прием тяжелых грузовиков уточнить.",
+      "timezone": "Asia/Yekaterinburg",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b65-satka-petromaster",
+      "source_file": "sto-chelyabinsk-m5-batch65-2026-11-27.json",
+      "source_id": "b65-satka-petromaster",
+      "name": "ПетроМастер — ТСЦ Сатка",
+      "address": "Челябинская область, Саткинский район, М5, 1705-й км, ТехПОСТ",
+      "phone": "+79823600174",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://nerudas.ru/karernaya-tekhnika-i-oborudovanie/gruzovoj-shinomontazh/17059-tsc-satka",
+        "https://petromaster.ru/services/gruzovoy_shinomontazh"
+      ],
+      "notes": "Локальный контакт в отраслевом справочнике обновлен 08.05.2024; актуальность проверить.",
+      "timezone": "Asia/Yekaterinburg",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b65-satka-vlksm",
+      "source_file": "sto-chelyabinsk-m5-batch65-2026-11-27.json",
+      "source_id": "b65-satka-vlksm",
+      "name": "Шиномонтаж — 50 лет ВЛКСМ",
+      "address": "Челябинская область, Сатка, ул. 50 лет ВЛКСМ, 2Б",
+      "phone": "+73516134191",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://satka.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Название оператора и размеры шин уточнить.",
+      "timezone": "Asia/Yekaterinburg",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b65-satka-ivanor",
+      "source_file": "sto-chelyabinsk-m5-batch65-2026-11-27.json",
+      "source_id": "b65-satka-ivanor",
+      "name": "Ivanor",
+      "address": "Челябинская область, Сатка, ул. Орджоникидзе, 13А",
+      "phone": "+79048140100",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://satka.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Два варианта адреса 13 и 13А с одним телефоном; объединены. Часы работы расходятся.",
+      "timezone": "Asia/Yekaterinburg",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b65-zlat-truck",
+      "source_file": "sto-chelyabinsk-m5-batch65-2026-11-27.json",
+      "source_id": "b65-zlat-truck",
+      "name": "TRUCK",
+      "address": "Челябинская область, Златоуст, ул. Шоссейная, 4",
+      "phone": "+79087058111",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://zlatoust.avto-kray.ru/company/shinomontag/truck-avtoservis-217170",
+        "https://mestam.info/ru/zlatoust/remont-gruzovih-avtomobilei",
+        "https://zlatoust.spravker.ru/ustanovka-i-remont-dopolnitelnogo-oborudovaniia/"
+      ],
+      "notes": "Последовательность цифр телефона отличается по источникам; основной указан в двух справочниках, оба требуют проверки.",
+      "timezone": "Asia/Yekaterinburg",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b65-zlat-rembaza",
+      "source_file": "sto-chelyabinsk-m5-batch65-2026-11-27.json",
+      "source_id": "b65-zlat-rembaza",
+      "name": "Рембаза74",
+      "address": "Челябинская область, Златоуст, ул. Панфилова, 18А",
+      "phone": "+79000743373",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://mestam.info/ru/zlatoust/remont-gruzovih-avtomobilei",
+        "https://spravkainform.ru/russia/zlatoust/remont-gruzovogo-avtotransporta"
+      ],
+      "notes": "График и оператор уточнить.",
+      "timezone": "Asia/Yekaterinburg",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b65-zlat-elektro",
+      "source_file": "sto-chelyabinsk-m5-batch65-2026-11-27.json",
+      "source_id": "b65-zlat-elektro",
+      "name": "Zlatelektro174",
+      "address": "Челябинская область, Златоуст, ул. 30 лет Победы, 15",
+      "phone": "+79193212669",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://mestam.info/ru/zlatoust/remont-gruzovih-avtomobilei"
+      ],
+      "notes": "Специализацию по автоэлектрике и приём тяжелых машин подтвердить.",
+      "timezone": "Asia/Yekaterinburg",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b65-zlat-body",
+      "source_file": "sto-chelyabinsk-m5-batch65-2026-11-27.json",
+      "source_id": "b65-zlat-body",
+      "name": "Злат-Авто",
+      "address": "Челябинская область, Златоуст, 5-я Нижне-Вокзальная ул., 1Б/3А",
+      "phone": "+79127732277",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://mestam.info/ru/zlatoust/remont-gruzovih-avtomobilei"
+      ],
+      "notes": "Габариты грузового бокса уточнить.",
+      "timezone": "Asia/Yekaterinburg",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b65-miass-avto",
+      "source_file": "sto-chelyabinsk-m5-batch65-2026-11-27.json",
+      "source_id": "b65-miass-avto",
+      "name": "Миасс-Авто",
+      "address": "Челябинская область, Миасс, Тургоякское шоссе, 5/17",
+      "phone": "+73517510751",
+      "evidence": "business_first_party_website",
+      "source_urls": [
+        "https://service.miass-avto.ru/",
+        "https://miass.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "На сайте указан основной сервисный телефон; дополнительные из справочника. РусСпецАвто по тому же адресу не считать отдельно без подтверждения.",
+      "timezone": "Asia/Yekaterinburg",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b65-miass-uralgruz",
+      "source_file": "sto-chelyabinsk-m5-batch65-2026-11-27.json",
+      "source_id": "b65-miass-uralgruz",
+      "name": "УралГрузСервис",
+      "address": "Челябинская область, Миасс, Динамовское шоссе, 7/11",
+      "phone": "+79088263709",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://miass.spravker.ru/remont-gruzovykh-avtomobilei/",
+        "https://miass.spravka.city/company/uralgruzservis"
+      ],
+      "notes": "График и прием тягачей уточнить.",
+      "timezone": "Asia/Yekaterinburg",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b65-miass-uralauto",
+      "source_file": "sto-chelyabinsk-m5-batch65-2026-11-27.json",
+      "source_id": "b65-miass-uralauto",
+      "name": "УралАвто",
+      "address": "Челябинская область, Миасс, Тургоякское шоссе, 13/23",
+      "phone": "+73517008836",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://miass.spravker.ru/remont-gruzovykh-avtomobilei/",
+        "https://spravkainform.ru/russia/miass/remont-i-obsluzhivanie-avtotransporta/uralavto"
+      ],
+      "notes": "Проверить актуальный график и марки.",
+      "timezone": "Asia/Yekaterinburg",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b65-miass-elevator",
+      "source_file": "sto-chelyabinsk-m5-batch65-2026-11-27.json",
+      "source_id": "b65-miass-elevator",
+      "name": "Автосервис грузовых автомобилей",
+      "address": "Челябинская область, Миасс, ул. Элеваторная, 15",
+      "phone": "+79123172774",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://miass.spravker.ru/remont-gruzovykh-avtomobilei/",
+        "https://miass.big-book-avto.ru/avtoservisy/"
+      ],
+      "notes": "Название и действующего оператора уточнить.",
+      "timezone": "Asia/Yekaterinburg",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b66-trakservice45",
+      "source_file": "sto-kurgan-kopeysk-shadrinsk-batch66-2026-11-27.json",
+      "source_id": "b66-trakservice45",
+      "name": "Траксервис45",
+      "address": "Курганская область, Курган, Курган-Шадринск тракт, 8А",
+      "phone": "+79630033499",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://rting.ru/kurgan/co/trakservis45/984574",
+        "https://mestam.info/ru/kurgan/remont-gruzovih-avtomobilei"
+      ],
+      "notes": "Два справочника подтверждают адрес; актуальность телефонов уточнить.",
+      "timezone": "Asia/Yekaterinburg",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b66-kopeysk-chkalova",
+      "source_file": "sto-kurgan-kopeysk-shadrinsk-batch66-2026-11-27.json",
+      "source_id": "b66-kopeysk-chkalova",
+      "name": "Автотехцентр по ремонту коммерческого транспорта",
+      "address": "Челябинская область, Копейск, ул. Чкалова, 4",
+      "phone": "+79080934320",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://kopeysk.spravka.city/company/avtotehcentr-po-remontu-kommercheskogo-transporta"
+      ],
+      "notes": "Телефон опубликован в деловой карточке; уточнить прием тяжелых тягачей.",
+      "timezone": "Asia/Yekaterinburg",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b66-kopeysk-magistral",
+      "source_file": "sto-kurgan-kopeysk-shadrinsk-batch66-2026-11-27.json",
+      "source_id": "b66-kopeysk-magistral",
+      "name": "Магистраль",
+      "address": "Челябинская область, Копейск, ул. Врубовая, 20/2",
+      "phone": "+79128049559",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://zoon.ru/chelyabinsk/autoservice/gruzovoj_avtoservis_magistral/",
+        "https://kopeysk.spravka.city/company/magistral-548",
+        "https://kopeysk.spravka.city/company/magistral-562"
+      ],
+      "notes": "Врубовая 20/3 — соседняя карточка той же сети; до уточнения учитывать одной площадкой.",
+      "timezone": "Asia/Yekaterinburg",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b66-shadrinsk-tire",
+      "source_file": "sto-kurgan-kopeysk-shadrinsk-batch66-2026-11-27.json",
+      "source_id": "b66-shadrinsk-tire",
+      "name": "Шиномонтаж — Курганский тракт",
+      "address": "Курганская область, Шадринск, Курганский тракт, 1А",
+      "phone": "+79128389888",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://shadrinsk.spravker.ru/shinomontazh/"
+      ],
+      "notes": "Уточнить доступные размеры грузовых колес и название оператора.",
+      "timezone": "Asia/Yekaterinburg",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b66-kardanbalans-kurgan",
+      "source_file": "sto-kurgan-kopeysk-shadrinsk-batch66-2026-11-27.json",
+      "source_id": "b66-kardanbalans-kurgan",
+      "name": "КарданБаланс — Курган",
+      "address": "Курганская область, Курган, Омская ул., 146",
+      "phone": "+78005555037",
+      "evidence": "first_party_profile_and_directory",
+      "source_urls": [
+        "https://kurgan.kardanbalans.ru/services/",
+        "https://kurgan.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Общий номер сети, часы из справочника; отдельная физическая площадка. Прием целого грузовика уточнить.",
+      "timezone": "Asia/Yekaterinburg",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b67-star-trucks",
+      "source_file": "sto-tyumen-omsk-r402-r254-batch67-2026-11-27.json",
+      "source_id": "b67-star-trucks",
+      "name": "Star trucks",
+      "address": "Тюменская область, Ялуторовск, ул. Революции, 184, стр. 2",
+      "phone": "+79526728292",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://mestam.info/ru/yalutorovsk/remont-gruzovih-avtomobilei",
+        "https://mestam.info/ru/yalutorovsk/mesto/5423428-star-trucks-revolyucii-184-st2"
+      ],
+      "notes": "Уточнить график и прием полуприцепов.",
+      "timezone": "Asia/Yekaterinburg",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b67-detali-mashin",
+      "source_file": "sto-tyumen-omsk-r402-r254-batch67-2026-11-27.json",
+      "source_id": "b67-detali-mashin",
+      "name": "Детали машин",
+      "address": "Тюменская область, Ялуторовск, ул. Лизы Чайкиной, 48, стр. 1/2, 1 этаж",
+      "phone": "+79504950450",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://mestam.info/ru/yalutorovsk/remont-gruzovih-avtomobilei"
+      ],
+      "notes": "Уточнить действующего оператора и виды работ.",
+      "timezone": "Asia/Yekaterinburg",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b67-yalutorovsk-sto",
+      "source_file": "sto-tyumen-omsk-r402-r254-batch67-2026-11-27.json",
+      "source_id": "b67-yalutorovsk-sto",
+      "name": "Грузовое СТО Ялуторовск",
+      "address": "Тюменская область, Ялуторовск, ул. Лизы Чайкиной, 50, стр. 4",
+      "phone": "+79220059797",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://mestam.info/ru/yalutorovsk/remont-gruzovih-avtomobilei"
+      ],
+      "notes": "Отдельный адрес и номер; проверить физическую отдельность от соседней СТО.",
+      "timezone": "Asia/Yekaterinburg",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b67-ishim-sto",
+      "source_file": "sto-tyumen-omsk-r402-r254-batch67-2026-11-27.json",
+      "source_id": "b67-ishim-sto",
+      "name": "СТО-грузовик",
+      "address": "Тюменская область, Ишимский район, с. Стрехнино, квартал ЗАО Заря, 4",
+      "phone": "+79829420202",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://ishim.spravker.ru/remont-gruzovykh-avtomobilei/",
+        "https://ishim.avto-kray.ru/company/avtoservis-avtotekhtsentr/sto-gruzovik-241327"
+      ],
+      "notes": "Два справочника: совпадает основной телефон, графики различаются (ежедневно либо Пн–Пт 09–18). Уточнить.",
+      "timezone": "Asia/Yekaterinburg",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b68-r254-1151-tire",
+      "source_file": "sto-novosibirsk-r254-barabinsk-batch68-2026-11-27.json",
+      "source_id": "b68-r254-1151-tire",
+      "name": "Автомагазин и грузовой шиномонтаж",
+      "address": "Новосибирская область, Барабинский район, Р-254 Иртыш, 1151-й км, 1",
+      "phone": "+79130004002",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://barabinsk.spravker.ru/gruzovoi-shinomontazh/",
+        "https://barabinsk.jsprav.ru/gruzovoj-shinomontazh/"
+      ],
+      "notes": "Проверить точный въезд, фактический оператор и возможность обслуживания фур.",
+      "timezone": "Asia/Novosibirsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b68-sibir-koleso-barabinsk",
+      "source_file": "sto-novosibirsk-r254-barabinsk-batch68-2026-11-27.json",
+      "source_id": "b68-sibir-koleso-barabinsk",
+      "name": "Сибирь Колесо",
+      "address": "Новосибирская область, Барабинск, ул. Ермака, 20",
+      "phone": "+79130054884",
+      "evidence": "first_party_and_directory",
+      "source_urls": [
+        "https://barabinsk.spravker.ru/gruzovoi-shinomontazh/",
+        "https://barabinsk.sibirkoleso.ru/service/",
+        "https://barabinsk.sibirkoleso.ru/stocks/shinomontazh-v-podarok/"
+      ],
+      "notes": "Сайт сети указывает грузовые и Газели; предельный размер колеса и филиальный график подтвердить. Общий 800 — контакт сети.",
+      "timezone": "Asia/Novosibirsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b68-avtotehnik",
+      "source_file": "sto-novosibirsk-r254-barabinsk-batch68-2026-11-27.json",
+      "source_id": "b68-avtotehnik",
+      "name": "Автотехник",
+      "address": "Новосибирская область, Барабинск, пер. Гутова, 20",
+      "phone": "+79137104607",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://barabinsk.spravker.ru/gruzovoi-shinomontazh/",
+        "https://barabinsk.spravker.ru/remont-bokovykh-porezov-shin/"
+      ],
+      "notes": "Грузовой профиль заявлен в справочнике; конкретное оборудование и ремонт тягачей уточнить.",
+      "timezone": "Asia/Novosibirsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b68-cardan",
+      "source_file": "sto-novosibirsk-r254-barabinsk-batch68-2026-11-27.json",
+      "source_id": "b68-cardan",
+      "name": "СТО Cardan",
+      "address": "Новосибирская область, Барабинск, ул. Деповская, 24",
+      "phone": "+79133889763",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://barabinsk.spravker.ru/gruzovoi-shinomontazh/",
+        "https://barabinsk.jsprav.ru/remont-shin/"
+      ],
+      "notes": "Также указан как автомойка, но грузовую мойку и ремонт карданов не считать подтверждёнными.",
+      "timezone": "Asia/Novosibirsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    }
+  ],
+  "notes": "Draft only. Coordinates and activity not independently verified; conservative duplicate screening is not exhaustive."
+}

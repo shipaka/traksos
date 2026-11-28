@@ -759,13 +759,13 @@ try{
       const servicePage=await serviceContext.newPage();
       await servicePage.goto(base+'/#/sandbox-enter?ticket='+
         encodeURIComponent(issueSandboxTicket('service',secret,Date.now())),{waitUntil:'domcontentloaded'});
-      await servicePage.waitForFunction(()=>localStorage.getItem('traksos.token')?.length>30,
+      await servicePage.waitForFunction(()=>!location.hash.startsWith('#/sandbox-enter') && localStorage.getItem('traksos.token')?.length>30,
         null,{timeout:20000});
       serviceToken=await servicePage.evaluate(()=>localStorage.getItem('traksos.token'));
       const adminPage=await adminContext.newPage();
       await adminPage.goto(base+'/#/sandbox-enter?ticket='+
         encodeURIComponent(issueSandboxTicket('admin',secret,Date.now())),{waitUntil:'domcontentloaded'});
-      await adminPage.waitForFunction(()=>localStorage.getItem('traksos.token')?.length>30,
+      await adminPage.waitForFunction(()=>!location.hash.startsWith('#/sandbox-enter') && localStorage.getItem('traksos.token')?.length>30,
         null,{timeout:20000});
       const adminToken=await adminPage.evaluate(()=>localStorage.getItem('traksos.token'));
       const station=await serviceContext.request.get(base+'/api/base',{
@@ -839,6 +839,30 @@ try{
       await guestPage.screenshot({path:out+'/guest-1440-partner-consent-revoked.png',
         fullPage:false,animations:'disabled'});
       console.log('LIVE PARTNER MAP CONSENT PASS',centerId,'published → selected → revoked');
+      // Actual directory publication in this disposable DB only, not production.
+      const pilot=await requestOk(await adminContext.request.get(base+'/api/admin/sto-directory/pilot',{headers:auth(adminToken)}),'Preview independent directory batch');
+      const ready=pilot.items.filter(p=>p.status==='ready');
+      if(ready.length!==16)throw Error('Unexpected pilot readiness: '+ready.length);
+      const published=await requestOk(await adminContext.request.post(base+'/api/admin/sto-directory/publish-pilot',{headers:auth(adminToken),data:{batch:pilot.batch,confirmSourceReview:true}}),'Publish independent directory in sandbox');
+      if(published.published!==16)throw Error('Pilot did not publish all sandbox drafts');
+      await guestPage.evaluate(()=>window.dispatchEvent(new Event('focus')));
+      await guestPage.waitForFunction(()=>document.querySelector('#sto-category-filter option[value="all"]')?.textContent==='Все СТО (16)',null,{timeout:15000});
+      const cluster=dialog.locator('.tr-network-marker.is-directory.is-cluster').first();
+      await cluster.waitFor({state:'visible',timeout:10000});
+      await guestPage.screenshot({path:out+'/guest-1440-independent-directory-clusters.png',fullPage:false,animations:'disabled'});
+      await dialog.locator('#sto-category-filter').selectOption('wash');
+      const wash=dialog.getByRole('button',{name:'СТО Авто-Тех-Сервис — грузовая мойка · сторонняя',exact:true});
+      await wash.waitFor({state:'visible',timeout:10000});
+      if(!(await wash.evaluate(el=>el.classList.contains('is-directory')&&!el.classList.contains('is-verified'))))throw Error('Independent marker incorrectly styled as partner');
+      await wash.click();
+      const directoryCard=dialog.getByRole('complementary',{name:'Карточка стороннего СТО'});
+      await directoryCard.getByText('Сторонняя организация · не подтверждена',{exact:true}).waitFor();
+      if(await directoryCard.getByRole('link',{name:/Позвонить напрямую/}).getAttribute('href')!=='tel:+79057341949')throw Error('Directory direct dial missing');
+      await guestPage.screenshot({path:out+'/guest-1440-independent-directory-card.png',fullPage:false,animations:'disabled'});
+      const layer=await requestOk(await guestContext.request.get(base+'/api/public/sto-directory'),'Published independent layer');
+      const partners=await requestOk(await guestContext.request.get(base+'/api/public/partner-map'),'Partner layer remains separate');
+      if(layer.points.length!==16||layer.points.some(p=>!p.directory)||partners.points.some(p=>p.id.startsWith('directory:')))throw Error('Directory and partner data mixed');
+      console.log('LIVE INDEPENDENT DIRECTORY PASS: 16 published drafts, clusters, gray category marker, direct dial, independent API');
     }catch(error){
       const detail=String(error instanceof Error?error.stack??error.message:error);
       failures.push({role:'guest-map-live-opt-in',width:1440,detail});

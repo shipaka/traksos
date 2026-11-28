@@ -1,0 +1,31 @@
+{
+  "source": "STO_MAP_GEOCODING_QUEUE_2026-11-27.json",
+  "initial_drafts": 40,
+  "input": 467,
+  "new_drafts": 464,
+  "total_drafts": 504,
+  "held_count": 3,
+  "missing_gps_new": 464,
+  "category_counts": {
+    "sto": 370,
+    "trailer": 94
+  },
+  "held": [
+    {
+      "id": "32:mtbr-shushary",
+      "reason": "possible_existing_site",
+      "existing": "directory:mtbr-shushary"
+    },
+    {
+      "id": "32:tservice-fedorovskoe",
+      "reason": "possible_existing_site",
+      "existing": "directory:tservice-fedorovskoe"
+    },
+    {
+      "id": "33:irsa-spb",
+      "reason": "possible_existing_site",
+      "existing": "directory:irsa-spb"
+    }
+  ],
+  "notes": "Exact or conservative possible-duplicate screening only. All rows draft; no publish. Category inferred from listed services; needs admin review."
+}
