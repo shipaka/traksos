@@ -1,7 +1,7 @@
 // First-party published business contact facts; no affiliation or current operating-status claim.
 // Rechecked 2026-11-28. No copyrighted photos, descriptions or database copied.
 // Admin must confirm source reuse review; stale/hidden/edited rows are never overwritten.
-export const STO_PILOT_BATCH = 'first-party-2026-11-28';
+export const STO_PILOT_BATCH = 'first-party-2026-11-28-v2';
 export const STO_PILOT = [
   {
     "id": "directory:mtbr-shushary",
@@ -192,5 +192,59 @@ export const STO_PILOT = [
     "hours": "Пн–пт 09:00–17:00 (по сайту)",
     "source": "https://www.astaworld.ru/shops/asta_zapchasti_kola_mironova_10",
     "evidence": "https://www.astaworld.ru/shops/asta_zapchasti_kola_mironova_10"
+  },
+  {
+    "id": "directory:ivservice-shushary",
+    "name": "ИВ-Сервис",
+    "address": "Санкт-Петербург, Шушары, Московское шоссе, 233, лит. А",
+    "phone": "+78126406464",
+    "category": "sto",
+    "lat": 59.763978,
+    "lng": 30.480488,
+    "services": [
+      "Грузовики",
+      "Прицепная техника",
+      "Диагностика"
+    ],
+    "hours": null,
+    "source": "https://www.iv-service.ru/adress.html",
+    "evidence": "https://www.iv-service.ru/adress.html"
+  },
+  {
+    "id": "directory:irsa-spb",
+    "name": "ИРСА",
+    "address": "Санкт-Петербург, ул. Заповедная, 51А",
+    "phone": "+79319547100",
+    "category": "sto",
+    "lat": 60.047703,
+    "lng": 30.25074,
+    "services": [
+      "Ремонт грузовиков",
+      "Двигатели",
+      "Подвеска",
+      "Тормоза",
+      "Грузовой шиномонтаж"
+    ],
+    "hours": null,
+    "source": "https://remzona-irsa.ru/",
+    "evidence": "https://remzona-irsa.ru/"
+  },
+  {
+    "id": "directory:bv-service-odintsovo",
+    "name": "БВ СЕРВИС",
+    "address": "Московская область, Одинцово, ул. Внуковская, 9",
+    "phone": "+74952041949",
+    "category": "sto",
+    "lat": 55.656607,
+    "lng": 37.283858,
+    "services": [
+      "Грузовые автомобили",
+      "Тягачи",
+      "Прицепы и полуприцепы",
+      "ТО"
+    ],
+    "hours": null,
+    "source": "https://bvts.ru/contacts",
+    "evidence": "https://bvts.ru/contacts"
   }
 ] as const;
