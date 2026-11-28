@@ -1,7 +1,7 @@
 // First-party published business contact facts; no affiliation or current operating-status claim.
 // Rechecked 2026-11-28. No copyrighted photos, descriptions or database copied.
 // Admin must confirm source reuse review; stale/hidden/edited rows are never overwritten.
-export const STO_PILOT_BATCH = 'first-party-2026-11-28-v2';
+export const STO_PILOT_BATCH = 'first-party-2026-11-28-v3';
 export const STO_PILOT = [
   {
     "id": "directory:mtbr-shushary",
@@ -246,5 +246,44 @@ export const STO_PILOT = [
     "hours": null,
     "source": "https://bvts.ru/contacts",
     "evidence": "https://bvts.ru/contacts"
+  },
+  {
+    "id": "directory:sto124-krasnoyarsk",
+    "name": "СТО124",
+    "address": "Красноярский край, Красноярск, ГК Автокемпинг, 805 км трассы М53",
+    "phone": "+73912801522",
+    "category": "sto",
+    "lat": 56.08406,
+    "lng": 92.75598,
+    "services": [
+      "Тягачи",
+      "Полуприцепы",
+      "ТО",
+      "Ремонт"
+    ],
+    "hours": null,
+    "source": "https://xn--124-redog.xn--p1ai/contacts/",
+    "evidence": "https://xn--124-redog.xn--p1ai/contacts/"
+  },
+  {
+    "id": "directory:furgonmaster-kalininskaya",
+    "name": "Фургонмастер",
+    "address": "Краснодарский край, ст. Калининская, ул. Степная, трасса Тимашевск–Славянск-на-Кубани, 29-й км",
+    "phone": "+79284587007",
+    "category": "sto",
+    "lat": 45.479787,
+    "lng": 38.705314,
+    "services": [
+      "Ходовая",
+      "Кузова",
+      "Рамы",
+      "Кабины",
+      "Полуприцепы",
+      "Шиномонтаж",
+      "Рефрижераторы"
+    ],
+    "hours": null,
+    "source": "https://furgonmaster.ru/contacts/",
+    "evidence": "https://furgonmaster.ru/contacts/"
   }
 ] as const;

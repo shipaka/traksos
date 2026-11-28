@@ -84,6 +84,23 @@ function PilotPublication({onSaved}:{onSaved:()=>void}){
  <button className="btn" disabled={busy||!checked||!batch.items.some(p=>p.status==='ready')} onClick={()=>void publish()}>Опубликовать первую партию на карте</button></>}
  {note&&<p role="status">{note}</p>}</details>;
 }
+function ReviewedPublication({onSaved}:{onSaved:()=>void}){
+ const [busy,setBusy]=useState(false),[note,setNote]=useState(''),[rows,setRows]=useState<unknown[]|null>(null),[confirmed,setConfirmed]=useState(false);const lock=useRef(false);
+ async function load(file:File|undefined){if(!file||lock.current)return;lock.current=true;setBusy(true);setRows(null);setConfirmed(false);setNote('');
+  try{if(file.size>5_000_000)throw Error('Файл больше 5 МБ');const data=JSON.parse(await file.text());
+   if(!Array.isArray(data)||data.length<1||data.length>10000||data.some(p=>!p||typeof p.id!=='string'||!/^directory:[a-z0-9-]+$/.test(p.id)||!Number.isInteger(p.revision)||p.revision<1||p.sourceReuseChecked!==true||p.locationChecked!==true||Object.keys(p).length!==4)||new Set(data.map(p=>p.id)).size!==data.length)throw Error('Нужны уникальные id, revision и два подтверждения true в каждой строке.');
+   setRows(data);setNote('Карточек в файле: '+data.length);
+  }catch(e){setNote(message(e));}finally{lock.current=false;setBusy(false);}
+ }
+ async function publish(){if(!rows||!confirmed||lock.current)return;lock.current=true;setBusy(true);setNote('');let published=0,skipped=0;
+  try{for(let i=0;i<rows.length;i+=100){const r=await post<{published:number;skipped:number}>(root+'/publish-reviewed',rows.slice(i,i+100));published+=r.published;skipped+=r.skipped;}setNote('Опубликовано: '+published+'. Пропущено: '+skipped+'.');setRows(null);setConfirmed(false);}
+  catch(e){setNote('Опубликовано до ошибки: '+published+'. Пропущено: '+skipped+'. '+message(e));}finally{onSaved();lock.current=false;setBusy(false);}
+ }
+ return <details className="card stack"><summary>Массовая публикация проверенных карточек</summary><p className="note">Загрузите только вручную сверенные черновики с GPS и допустимым источником. JSON-массив: id, revision, sourceReuseChecked: true, locationChecked: true. Это не автоматическая проверка. Изменённые, скрытые, уже опубликованные и не имеющие GPS карточки будут пропущены.</p>
+ <label className="stack">Файл подтверждённых карточек<input type="file" accept=".json,application/json" disabled={busy} onChange={e=>{const file=e.target.files?.[0];e.target.value='';void load(file);}}/></label>
+ {rows&&<><label><input type="checkbox" checked={confirmed} disabled={busy} onChange={e=>setConfirmed(e.target.checked)}/> Подтверждаю проверку каждой карточки из файла.</label><button type="button" className="btn" disabled={!confirmed||busy} onClick={()=>void publish()}>Опубликовать {rows.length} карточек</button></>}
+ {note&&<p role="status">{note}</p>}</details>;
+}
 const initial={q:'',state:'',category:'',missingGps:false};
 export function AdminStoDirectory(){
  const [draft,setDraft]=useState(initial);const [filters,setFilters]=useState(initial);const [cursors,setCursors]=useState(['']);const [items,setItems]=useState<Item[]>([]);const [loading,setLoading]=useState(true);const [error,setError]=useState('');const [version,reload]=useState(0);
@@ -103,6 +120,7 @@ export function AdminStoDirectory(){
  <button className="btn" type="submit">Найти</button><button className="btn ghost" type="button" onClick={()=>setEdit(null)}>Добавить СТО</button></form>
  <PilotPublication onSaved={()=>reload(v=>v+1)}/>
  <GeocodeTools onSaved={()=>reload(v=>v+1)}/>
+ <ReviewedPublication onSaved={()=>reload(v=>v+1)}/>
  {edit!==undefined&&<Editor key={edit?.id??'new'} item={edit} onSaved={saved} onCancel={()=>setEdit(undefined)}/>}
  {loading&&<p role="status">Загружаем справочник…</p>}{error&&<p className="banner bad" role="alert">{error} <button className="btn ghost small" onClick={()=>reload(v=>v+1)}>Повторить</button></p>}
  {!loading&&!error&&items.length===0&&<p>Карточек по этим условиям нет.</p>}

@@ -193,6 +193,7 @@ export function createApp(d: Deps) {
   r.post('/api/admin/sto-directory/geocode-results', ['admin'], (c:AuthedCtx) => stoDirectory.importGeocodes(c.body));
   r.get('/api/admin/sto-directory/pilot', ['admin'], () => stoDirectory.pilotPreview());
   r.post('/api/admin/sto-directory/publish-pilot', ['admin'], (c:AuthedCtx) => stoDirectory.publishPilot(c.user,c.body));
+  r.post('/api/admin/sto-directory/publish-reviewed', ['admin'], (c:AuthedCtx) => stoDirectory.publishReviewed(c.user,c.body));
   r.post('/api/admin/sto-directory/import', ['admin'], (c:AuthedCtx) => stoDirectory.create(c.body));
   r.put('/api/admin/sto-directory/:id', ['admin'], (c:AuthedCtx) => stoDirectory.edit(c.params.id,c.body));
   r.put('/api/admin/sto-directory/:id/review', ['admin'], (c:AuthedCtx) => stoDirectory.review(c.params.id,c.user,c.body));

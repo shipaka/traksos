@@ -47,17 +47,33 @@ test('first-party map pilot publishes only unchanged drafts through admin approv
  const root='/api/admin/sto-directory';
  assert.equal((await t.api('GET',root+'/pilot',undefined,client.token)).status,403);
  const pilot=ok(await t.api('GET',root+'/pilot',undefined,admin.token));
- assert.equal(pilot.items.length,14);
- assert.equal(pilot.items.filter((x:any)=>x.status==='ready').length,14);
+ assert.equal(pilot.items.length,16);
+ assert.equal(pilot.items.filter((x:any)=>x.status==='ready').length,16);
  assert.equal((await t.api('POST',root+'/publish-pilot',{batch:pilot.batch,confirmSourceReview:true},client.token)).status,403);
  assert.equal((await t.api('POST',root+'/publish-pilot',{batch:pilot.batch,confirmSourceReview:false},admin.token)).status,400);
  const held=pilot.items[0].id;
  ok(await t.api('PUT',root+'/'+held+'/review',{revision:1,state:'hidden',sourceReuseChecked:false,locationChecked:false},admin.token));
  const result=ok(await t.api('POST',root+'/publish-pilot',{batch:pilot.batch,confirmSourceReview:true},admin.token));
- assert.equal(result.published,13);assert.equal(result.skipped,1);
+ assert.equal(result.published,15);assert.equal(result.skipped,1);
  const points=ok(await t.api('GET','/api/public/sto-directory')).points;
- assert.equal(points.length,13);assert.ok(points.every((p:any)=>p.directory===true&&p.id!==held&&Number.isFinite(p.lat)&&Number.isFinite(p.lng)));
+ assert.equal(points.length,15);assert.ok(points.every((p:any)=>p.directory===true&&p.id!==held&&Number.isFinite(p.lat)&&Number.isFinite(p.lng)));
  assert.deepEqual(ok(await t.api('GET','/api/public/partner-map')).points,[]);
  const again=ok(await t.api('POST',root+'/publish-pilot',{batch:pilot.batch,confirmSourceReview:true},admin.token));
- assert.equal(again.published,0);assert.equal(again.alreadyPublished,13);assert.equal(again.skipped,1);
+ assert.equal(again.published,0);assert.equal(again.alreadyPublished,15);assert.equal(again.skipped,1);
+});
+
+test('bulk reviewed publication skips stale, hidden and missing GPS drafts and forbids client use',async()=>{
+ const root='/api/admin/sto-directory';
+ const valid={...site,id:'directory:bulk-review-ok'},stale={...site,id:'directory:bulk-review-stale'},missing={...site,id:'directory:bulk-review-missing',lat:null,lng:null},hidden={...site,id:'directory:bulk-review-hidden'};
+ ok(await t.api('POST',root+'/import',[valid,stale,missing,hidden],admin.token));
+ ok(await t.api('PUT',root+'/'+stale.id,{revision:1,site:{...stale,lat:60}},admin.token));
+ ok(await t.api('PUT',root+'/'+hidden.id+'/review',{revision:1,state:'hidden',sourceReuseChecked:false,locationChecked:false},admin.token));
+ const rows=[valid,stale,missing,hidden].map(p=>({id:p.id,revision:1,sourceReuseChecked:true,locationChecked:true}));
+ assert.equal((await t.api('POST',root+'/publish-reviewed',rows,client.token)).status,403);
+ assert.equal((await t.api('POST',root+'/publish-reviewed',[{...rows[0],locationChecked:false}],admin.token)).status,400);
+ const result=ok(await t.api('POST',root+'/publish-reviewed',rows,admin.token));
+ assert.equal(result.published,1);assert.equal(result.skipped,3);
+ const publicIds=ok(await t.api('GET','/api/public/sto-directory')).points.map((p:any)=>p.id);
+ assert.ok(publicIds.includes(valid.id));assert.ok(![stale,missing,hidden].some(p=>publicIds.includes(p.id)));
+ assert.equal(ok(await t.api('POST',root+'/publish-reviewed',rows,admin.token)).published,0);
 });

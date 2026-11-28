@@ -83,6 +83,20 @@ export class StoDirectory {
    return {published,alreadyPublished:items.filter(p=>p.status==='published').length,skipped:items.filter(p=>p.status==='changed_or_missing').length};
   });
  }
+ async publishReviewed(user:AuthUser,body:unknown){
+  const rows=parse(z.array(z.object({id:siteId,revision:z.number().int().positive(),sourceReuseChecked:z.literal(true),locationChecked:z.literal(true)}).strict()).min(1).max(100),body);
+  if(new Set(rows.map(p=>p.id)).size!==rows.length)throw bad('duplicate_id');
+  return this.db.tx(async q=>{
+   const result:{id:string;status:'published'|'skipped'}[]=[];
+   for(const p of [...rows].sort((a,b)=>a.id.localeCompare(b.id))){
+    const saved=await q.one(`update sto_directory_sites set state='published',source_reuse_checked=true,location_checked=true,
+      reviewed_by=$3,reviewed_at=now(),revision=revision+1,updated_at=now()
+      where id=$1 and revision=$2 and state='draft' and lat is not null and lng is not null returning id`,[p.id,p.revision,user.id]);
+    result.push({id:p.id,status:saved?'published':'skipped'});
+   }
+   return {published:result.filter(p=>p.status==='published').length,skipped:result.filter(p=>p.status==='skipped').length,result};
+  });
+ }
  async create(body:unknown){
   const rows=parse(z.array(input).min(1).max(100),body);
   if(new Set(rows.map(p=>p.id)).size!==rows.length)throw bad('duplicate_id','Повтор идентификатора в пакете');

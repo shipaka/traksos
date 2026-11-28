@@ -842,11 +842,11 @@ try{
       // Actual directory publication in this disposable DB only, not production.
       const pilot=await requestOk(await adminContext.request.get(base+'/api/admin/sto-directory/pilot',{headers:auth(adminToken)}),'Preview independent directory batch');
       const ready=pilot.items.filter(p=>p.status==='ready');
-      if(ready.length!==14)throw Error('Unexpected pilot readiness: '+ready.length);
+      if(ready.length!==16)throw Error('Unexpected pilot readiness: '+ready.length);
       const published=await requestOk(await adminContext.request.post(base+'/api/admin/sto-directory/publish-pilot',{headers:auth(adminToken),data:{batch:pilot.batch,confirmSourceReview:true}}),'Publish independent directory in sandbox');
-      if(published.published!==14)throw Error('Pilot did not publish all sandbox drafts');
+      if(published.published!==16)throw Error('Pilot did not publish all sandbox drafts');
       await guestPage.evaluate(()=>window.dispatchEvent(new Event('focus')));
-      await guestPage.waitForFunction(()=>document.querySelector('#sto-category-filter option[value="all"]')?.textContent==='Все СТО (14)',null,{timeout:15000});
+      await guestPage.waitForFunction(()=>document.querySelector('#sto-category-filter option[value="all"]')?.textContent==='Все СТО (16)',null,{timeout:15000});
       const cluster=dialog.locator('.tr-network-marker.is-directory.is-cluster').first();
       await cluster.waitFor({state:'visible',timeout:10000});
       await guestPage.screenshot({path:out+'/guest-1440-independent-directory-clusters.png',fullPage:false,animations:'disabled'});
@@ -861,8 +861,8 @@ try{
       await guestPage.screenshot({path:out+'/guest-1440-independent-directory-card.png',fullPage:false,animations:'disabled'});
       const layer=await requestOk(await guestContext.request.get(base+'/api/public/sto-directory'),'Published independent layer');
       const partners=await requestOk(await guestContext.request.get(base+'/api/public/partner-map'),'Partner layer remains separate');
-      if(layer.points.length!==14||layer.points.some(p=>!p.directory)||partners.points.some(p=>p.id.startsWith('directory:')))throw Error('Directory and partner data mixed');
-      console.log('LIVE INDEPENDENT DIRECTORY PASS: 14 published drafts, clusters, gray category marker, direct dial, independent API');
+      if(layer.points.length!==16||layer.points.some(p=>!p.directory)||partners.points.some(p=>p.id.startsWith('directory:')))throw Error('Directory and partner data mixed');
+      console.log('LIVE INDEPENDENT DIRECTORY PASS: 16 published drafts, clusters, gray category marker, direct dial, independent API');
     }catch(error){
       const detail=String(error instanceof Error?error.stack??error.message:error);
       failures.push({role:'guest-map-live-opt-in',width:1440,detail});
