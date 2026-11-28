@@ -12,7 +12,8 @@
     "seed": "tsx src/seed.ts",
     "seed:sandbox": "tsx src/seedSandbox.ts",
     "import:dtc": "tsx src/ops/importObdex.ts",
-    "check:dtc": "tsx src/ops/importObdex.ts --check"
+    "check:dtc": "tsx src/ops/importObdex.ts --check",
+    "geocode:sto": "tsx src/ops/geocodeSto.ts"
   },
   "dependencies": {
     "pg": "^8.13.1",
