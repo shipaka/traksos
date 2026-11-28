@@ -1,0 +1,1204 @@
+{
+  "schema": "sto-regional-import-audit-v1",
+  "previous_drafts": 1304,
+  "source_rows": 72,
+  "added_drafts": 65,
+  "held_count": 7,
+  "expected_drafts": 1369,
+  "source_coordinates": 47,
+  "missing_coordinates": 1322,
+  "byCategory": {
+    "sto": 48,
+    "trailer": 15,
+    "refrigeration": 2
+  },
+  "totalByCategory": {
+    "sto": 862,
+    "tyre": 269,
+    "refrigeration": 26,
+    "trailer": 169,
+    "wash": 43
+  },
+  "byBatch": {
+    "sto-rostov-voronezh-lipetsk-krasnodar-batch14": {
+      "input": 16,
+      "added": 14,
+      "held": 2
+    },
+    "sto-volgograd-saratov-samara-penza-batch15": {
+      "input": 16,
+      "added": 15,
+      "held": 1
+    },
+    "sto-ulyanovsk-orenburg-tambov-mordovia-batch16": {
+      "input": 16,
+      "added": 14,
+      "held": 2
+    },
+    "sto-kaluga-tula-ryazan-orel-batch17": {
+      "input": 12,
+      "added": 11,
+      "held": 1
+    },
+    "sto-bryansk-kursk-belgorod-astrakhan-batch18": {
+      "input": 12,
+      "added": 11,
+      "held": 1
+    }
+  },
+  "byRegion": {
+    "Ростовская область": 4,
+    "Воронежская область": 4,
+    "Липецкая область": 4,
+    "Краснодарский край": 2,
+    "Волгоградская область": 4,
+    "Саратовская область": 2,
+    "Самарская область": 5,
+    "Пензенская область": 4,
+    "Ульяновская область": 4,
+    "Оренбургская область": 2,
+    "Тамбовская область": 5,
+    "Республика Мордовия": 3,
+    "Калужская область": 3,
+    "Тульская область": 3,
+    "Рязанская область": 2,
+    "Орловская область": 3,
+    "Брянская область": 3,
+    "Курская область": 3,
+    "Белгородская область": 4,
+    "Астраханская область": 1
+  },
+  "held": [
+    {
+      "source_file": "sto-rostov-voronezh-lipetsk-krasnodar-batch14-2026-11-27.json",
+      "source_id": "truckzona-ramon",
+      "name": "Трак-Зона",
+      "address": "Воронежская область, Рамонский район, Новоживотинновское сельское поселение, ул. Новаторов, 38",
+      "phone": "+79994030101",
+      "reason": "duplicate_id",
+      "existing": null
+    },
+    {
+      "source_file": "sto-rostov-voronezh-lipetsk-krasnodar-batch14-2026-11-27.json",
+      "source_id": "furgonmaster-kalininskaya",
+      "name": "Фургонмастер",
+      "address": "Краснодарский край, ст. Калининская, ул. Степная, трасса Тимашевск–Славянск-на-Кубани, 29-й км",
+      "phone": "+79284587007",
+      "reason": "duplicate_id",
+      "existing": null
+    },
+    {
+      "source_file": "sto-volgograd-saratov-samara-penza-batch15-2026-11-27.json",
+      "source_id": "vites-belozerki",
+      "name": "ВИТЕС — Белозёрки",
+      "address": "Самарская область, Красноярский район, с. Белозёрки",
+      "phone": "+78469773323",
+      "reason": "duplicate_id",
+      "existing": null
+    },
+    {
+      "source_file": "sto-ulyanovsk-orenburg-tambov-mordovia-batch16-2026-11-27.json",
+      "source_id": "unikom-ulyanovsk",
+      "name": "УникомТракСервис",
+      "address": "Ульяновская область, Ульяновск, Московское шоссе, 14С",
+      "phone": "+78422686262",
+      "reason": "same_address_and_contact_or_name",
+      "existing": "directory:research-35-simbirsktruck"
+    },
+    {
+      "source_file": "sto-ulyanovsk-orenburg-tambov-mordovia-batch16-2026-11-27.json",
+      "source_id": "orenscan-orenburg",
+      "name": "Оренбург-СканСервис",
+      "address": "Оренбургская область, Оренбург, ул. Лесозащитная, 18",
+      "phone": "+73532300086",
+      "reason": "same_address_and_contact_or_name",
+      "existing": "directory:research-33-orenscan"
+    },
+    {
+      "source_file": "sto-kaluga-tula-ryazan-orel-batch17-2026-11-27.json",
+      "source_id": "bat62-ryazan",
+      "name": "BAT62",
+      "address": "Рязанская область, Рязань, станция Лесок, 25",
+      "phone": "+78047001287",
+      "reason": "shared_address_review",
+      "existing": "directory:research-b48-6"
+    },
+    {
+      "source_file": "sto-bryansk-kursk-belgorod-astrakhan-batch18-2026-11-27.json",
+      "source_id": "volgotehsnab-astrakhan",
+      "name": "Волготехснаб-Каспий",
+      "address": "Астраханская область, Астрахань, Фунтовское шоссе, 9Б",
+      "phone": "+78512213000",
+      "reason": "same_address_and_contact_or_name",
+      "existing": "directory:research-b48-3"
+    }
+  ],
+  "provenance": [
+    {
+      "id": "directory:research-dontransservice-rostov",
+      "source_file": "sto-rostov-voronezh-lipetsk-krasnodar-batch14-2026-11-27.json",
+      "source_id": "dontransservice-rostov",
+      "name": "Донтранссервис",
+      "address": "Ростовская область, Ростов-на-Дону, ул. Пескова, 7",
+      "phone": "+79282899966",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://trans-service-rostov.ru/"
+      ],
+      "notes": "Доп. +7 916 923-77-30. Контакты опубликованы предприятием.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-kts-rostov",
+      "source_file": "sto-rostov-voronezh-lipetsk-krasnodar-batch14-2026-11-27.json",
+      "source_id": "kts-rostov",
+      "name": "КТС Ростов",
+      "address": "Ростовская область, Ростов-на-Дону, ул. Петрожицкого, 8Г",
+      "phone": "+79281030600",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://scug61.ru/"
+      ],
+      "notes": "На сайте указаны запись в WhatsApp и близость М-4.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-service-aksay",
+      "source_file": "sto-rostov-voronezh-lipetsk-krasnodar-batch14-2026-11-27.json",
+      "source_id": "service-aksay",
+      "name": "Грузовой автосервис Аксай",
+      "address": "Ростовская область, Аксай, просп. Ленина, 69",
+      "phone": "+79888921555",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://avtoservis-aksay.ru/"
+      ],
+      "notes": "Доп. +7 988 585-45-42. Гарантийный ремонт Kögel, Wielton, Тонар и Тверьстроймаш заявлен предприятием; юридическое название уточнить.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-asia-diesel-rostov",
+      "source_file": "sto-rostov-voronezh-lipetsk-krasnodar-batch14-2026-11-27.json",
+      "source_id": "asia-diesel-rostov",
+      "name": "Азия-Дизель",
+      "address": "Ростовская область, Ростов-на-Дону, ул. Некрасовская, 75",
+      "phone": "+79282290641",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://asia-diesel2.ru/"
+      ],
+      "notes": "Прием заявок в мессенджерах заявлен круглосуточно, часы стационарного СТО не установлены. Прием тяжелых тягачей уточнить.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-tmservice-voronezh",
+      "source_file": "sto-rostov-voronezh-lipetsk-krasnodar-batch14-2026-11-27.json",
+      "source_id": "tmservice-voronezh",
+      "name": "ТМ Сервис",
+      "address": "Воронежская область, Рамонский район, Айдаровское сельское поселение, тер. Промышленная, ул. 5-я Промышленная Зона, зд. 12/1",
+      "phone": "+78001006631",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://tm-service.ru/"
+      ],
+      "notes": "ИНН 3666270830 указан на сайте; официальная проверка не выполнена.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-gruzauto36-m4",
+      "source_file": "sto-rostov-voronezh-lipetsk-krasnodar-batch14-2026-11-27.json",
+      "source_id": "gruzauto36-m4",
+      "name": "ГрузАвто36 — ГК М4",
+      "address": "Воронежская область, автомагистраль М-4 Дон, 519-й км (ростовское направление)",
+      "phone": "+74732332200",
+      "evidence": "first_party_and_manufacturer",
+      "source_urls": [
+        "https://gruzauto36.com/",
+        "https://mayercargo.ru/dealers-map/"
+      ],
+      "notes": "MAYER указывает адрес Отрадное, ул. Автодорожная, 7/6 с тем же телефоном; уточнить соответствие площадки и въезд, не создавать дубль.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-vasilich-m4-492",
+      "source_file": "sto-rostov-voronezh-lipetsk-krasnodar-batch14-2026-11-27.json",
+      "source_id": "vasilich-m4-492",
+      "name": "ВасиличЪ — М-4",
+      "address": "Воронежская область, трасса М-4 Дон, 492-й км",
+      "phone": "+79525518005",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://vsv36.ru/m4.html",
+        "https://vsv36.ru/"
+      ],
+      "notes": "Эвакуатор и выездная бригада +7 980 246-81-70; другие телефоны на странице. Текст частично некорректно декодируется; адрес, телефоны и профиль читаются по индексу и исходной странице. Уточнить въезд и график.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-servisteh-vrn",
+      "source_file": "sto-rostov-voronezh-lipetsk-krasnodar-batch14-2026-11-27.json",
+      "source_id": "servisteh-vrn",
+      "name": "Сервистех-Врн",
+      "address": "Воронежская область, Воронеж, ул. Дорожная, 88",
+      "phone": "+74732476160",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://servistehvrn.ru/"
+      ],
+      "notes": "ИНН 3662276158 опубликован предприятием.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-crm-lipetsk",
+      "source_file": "sto-rostov-voronezh-lipetsk-krasnodar-batch14-2026-11-27.json",
+      "source_id": "crm-lipetsk",
+      "name": "Центральная ремонтная мастерская",
+      "address": "Липецкая область, Липецк, ул. Ковалева, 111В",
+      "phone": "+74742565956",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://crm-l.ru/repair_truck/"
+      ],
+      "notes": "Сайт перечисляет грузовые работы и контакт мастерской.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-furgonrem-lipetsk",
+      "source_file": "sto-rostov-voronezh-lipetsk-krasnodar-batch14-2026-11-27.json",
+      "source_id": "furgonrem-lipetsk",
+      "name": "ФургонРемСервис",
+      "address": "Липецкая область, Липецк, ул. Ковалёва, 115А",
+      "phone": "+79802612003",
+      "evidence": "business_hosted_page",
+      "source_urls": [
+        "https://furgonremservis.clients.site/"
+      ],
+      "notes": "Бизнес-страница на платформе Яндекса; специализированный кузовной/прицепной профиль.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-lipetskkomtrans",
+      "source_file": "sto-rostov-voronezh-lipetsk-krasnodar-batch14-2026-11-27.json",
+      "source_id": "lipetskkomtrans",
+      "name": "Липецккомтранс",
+      "address": "Липецкая область, Липецк, ул. Ковалева, 127А",
+      "phone": "+74742358222",
+      "evidence": "manufacturer_network",
+      "source_urls": [
+        "https://mayercargo.ru/dealers-map/"
+      ],
+      "notes": "Сервисный каталог производителя MAYER, ссылка на сайт предприятия https://lipetskkomtrans.ru/; отдельная проверка собственного сайта не выполнена.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-truckcenter-lipetsk",
+      "source_file": "sto-rostov-voronezh-lipetsk-krasnodar-batch14-2026-11-27.json",
+      "source_id": "truckcenter-lipetsk",
+      "name": "Трак Центр Липецк",
+      "address": "Липецкая область, Липецк, ул. Юношеская, стр. 46А",
+      "phone": "+79601445046",
+      "evidence": "manufacturer_network",
+      "source_urls": [
+        "https://mayercargo.ru/dealers-map/"
+      ],
+      "notes": "Контакт из сервисного каталога MAYER; универсальность сервиса, часы и работа сегодня не подтверждены.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-trucksun-druzhelyubny",
+      "source_file": "sto-rostov-voronezh-lipetsk-krasnodar-batch14-2026-11-27.json",
+      "source_id": "trucksun-druzhelyubny",
+      "name": "TruckSun — Краснодар",
+      "address": "Краснодарский край, Краснодар, пос. Дружелюбный, ул. Железнодорожная, 2Б",
+      "phone": "+79034117484",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://trucksun.ru/regions/krasnodar"
+      ],
+      "notes": "Общий телефон филиала, конкретные специализации и прямую приемку уточнить. Одна сеть с Екатеринбургом из batch09.",
+      "timezone": null,
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-rosspecavto-krasnodar",
+      "source_file": "sto-rostov-voronezh-lipetsk-krasnodar-batch14-2026-11-27.json",
+      "source_id": "rosspecavto-krasnodar",
+      "name": "Росспецавто",
+      "address": "Краснодарский край, Краснодар, пос. Березовый, ул. Карла Гусника, 26",
+      "phone": "+79673049358",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://rosspecavto.ru/servisnyj-centr/remont-gruzovoj-tehniki"
+      ],
+      "notes": "На сайте противоречат график субботы и email (rsa.1@bk.ru / rsa1@bk.ru), почту не записывать как установленную до уточнения. Выезд до 100 км заявлен компанией.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-vezdehod-volgograd",
+      "source_file": "sto-volgograd-saratov-samara-penza-batch15-2026-11-27.json",
+      "source_id": "vezdehod-volgograd",
+      "name": "Вездеход",
+      "address": "Волгоградская область, Волгоград, шоссе Авиаторов, 16, корп. 3",
+      "phone": "+78442980308",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://sto-vezdexod.ru/kontakty/"
+      ],
+      "notes": "Доп. +7 917 338-03-08; эвакуатор 24/7 +7 8442 98-07-01. Заезд с Авторемонтной.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-vat34-volgograd",
+      "source_file": "sto-volgograd-saratov-samara-penza-batch15-2026-11-27.json",
+      "source_id": "vat34-volgograd",
+      "name": "ВолгаАвтоТрейд",
+      "address": "Волгоградская область, Волгоград, ул. Моторная, 34",
+      "phone": "+79275059779",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://vat34.ru/service/"
+      ],
+      "notes": "Прямой телефон сервиса, общий +7 8442 430-430. Прием конкретной марки уточнять.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-autosfera-volgograd",
+      "source_file": "sto-volgograd-saratov-samara-penza-batch15-2026-11-27.json",
+      "source_id": "autosfera-volgograd",
+      "name": "АвтоСфера",
+      "address": "Волгоградская область, Волгоград, ул. Бетонная, 15",
+      "phone": "+79371043888",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://autosfera-servis.ru/"
+      ],
+      "notes": "Контакты опубликованы сервисом.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-tyagach-volgograd",
+      "source_file": "sto-volgograd-saratov-samara-penza-batch15-2026-11-27.json",
+      "source_id": "tyagach-volgograd",
+      "name": "Тягач",
+      "address": "Волгоградская область, Волгоград, ул. Автомобилистов, 1",
+      "phone": "+78442504807",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://tyagach-service.ru/"
+      ],
+      "notes": "Доп. +7 927 510-48-07.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-avtooazis-saratov",
+      "source_file": "sto-volgograd-saratov-samara-penza-batch15-2026-11-27.json",
+      "source_id": "avtooazis-saratov",
+      "name": "Автооазис",
+      "address": "Саратовская область, Саратов, ул. Автокомбинатовская, 15",
+      "phone": "+79603555765",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://avtooazis.ru/"
+      ],
+      "notes": "Круглосуточная помощь заявлена самим сервисом; фактический график стационарного поста уточнить.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-autoservis1-engels",
+      "source_file": "sto-volgograd-saratov-samara-penza-batch15-2026-11-27.json",
+      "source_id": "autoservis1-engels",
+      "name": "Авторемонтный и сервисный центр",
+      "address": "Саратовская область, Энгельс, ул. Промышленная, 30А",
+      "phone": "+78453525530",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://www.autoservis1.ru/index.htm",
+        "https://www.autoservis1.ru/contacts.htm"
+      ],
+      "notes": "Доп. +7 8452 46-75-64 и +7 937 630-05-86. Юридическое наименование и часы уточнить.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-mtss-samara",
+      "source_file": "sto-volgograd-saratov-samara-penza-batch15-2026-11-27.json",
+      "source_id": "mtss-samara",
+      "name": "МТ-Сервис-Самара",
+      "address": "Самарская область, Самара, Заводское шоссе, 5",
+      "phone": "+79277130139",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://www.mt-ss.ru/"
+      ],
+      "notes": "Общая линия +7 846 254-55-70; спецтехника и агрегаты +7 937 992-21-37.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-remservis-tolyatti",
+      "source_file": "sto-volgograd-saratov-samara-penza-batch15-2026-11-27.json",
+      "source_id": "remservis-tolyatti",
+      "name": "Ремсервис",
+      "address": "Самарская область, Тольятти, Южное шоссе, 24, стр. 3",
+      "phone": "+79277789598",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://rstlt.ru/"
+      ],
+      "notes": "ИНН 6321248621 опубликован предприятием; не сверялся с ФНС.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-akron-tolyatti",
+      "source_file": "sto-volgograd-saratov-samara-penza-batch15-2026-11-27.json",
+      "source_id": "akron-tolyatti",
+      "name": "Акрон Транс Сервис",
+      "address": "Самарская область, Тольятти, ул. Магистральная, 11Е",
+      "phone": "+79171215952",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://service-at.ru/"
+      ],
+      "notes": "Доп. +7 8482 94-41-04. Адрес указан как главный офис, въезд в ремзону уточнить. Содействие эвакуации, а не подтвержденный собственный эвакуатор.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-vites-samara",
+      "source_file": "sto-volgograd-saratov-samara-penza-batch15-2026-11-27.json",
+      "source_id": "vites-samara",
+      "name": "ВИТЕС — Самара",
+      "address": "Самарская область, Самара, ул. Земеца, 43",
+      "phone": "+78469773323",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://vites-auto.ru/contacts",
+        "https://vites-auto.ru/"
+      ],
+      "notes": "Общий номер сети, доп. +7 846 201-96-06. Конкретные услуги филиала уточнить.",
+      "timezone": null,
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-vites-alekseevka",
+      "source_file": "sto-volgograd-saratov-samara-penza-batch15-2026-11-27.json",
+      "source_id": "vites-alekseevka",
+      "name": "ВИТЕС — Алексеевка",
+      "address": "Самарская область, пос. Алексеевка, ул. Гагарина, 33",
+      "phone": "+78469773323",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://vites-auto.ru/contacts",
+        "https://vites-auto.ru/"
+      ],
+      "notes": "Общий телефон сети; отдельный номер и перечень работ филиала уточнить.",
+      "timezone": null,
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-rio-penza",
+      "source_file": "sto-volgograd-saratov-samara-penza-batch15-2026-11-27.json",
+      "source_id": "rio-penza",
+      "name": "РиО — грузовой сервис",
+      "address": "Пензенская область, Пенза, просп. Победы, 75А, к. 1",
+      "phone": "+78412391717",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://rio-gruz-servis.ru/contacts",
+        "https://rio-gruz-servis.ru/"
+      ],
+      "notes": "ООО НИКА, ИНН 5835137999 по сайту. Email бухгалтерии; для коммерческих переговоров лучше запросить ответственного.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-rio-ref-penza",
+      "source_file": "sto-volgograd-saratov-samara-penza-batch15-2026-11-27.json",
+      "source_id": "rio-ref-penza",
+      "name": "РиО — рефрижераторный цех",
+      "address": "Пензенская область, Пенза, ул. Строителей, 2В",
+      "phone": "+78412259797",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://rio-gruz-servis.ru/contacts",
+        "https://rio-gruz-servis.ru/"
+      ],
+      "notes": "Отдельная специализированная площадка, не универсальное СТО. Один оператор с грузовым цехом.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-doctruck-penza",
+      "source_file": "sto-volgograd-saratov-samara-penza-batch15-2026-11-27.json",
+      "source_id": "doctruck-penza",
+      "name": "Doctruck",
+      "address": "Пензенская область, Пенза, ул. Побочинская, 1А, к. 4",
+      "phone": "+79272881632",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://doctruck.ru/"
+      ],
+      "notes": "Помощь 24 часа заявлена сайтом; часы стационарного СТО уточнить.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-arsenal-penza",
+      "source_file": "sto-volgograd-saratov-samara-penza-batch15-2026-11-27.json",
+      "source_id": "arsenal-penza",
+      "name": "Arsenal",
+      "address": "Пензенская область, Пенза, ул. Строителей, 1Ч",
+      "phone": "+78412458384",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://arsenal058.ru/"
+      ],
+      "notes": "СТО рядом с М-5; отдельную мойку не добавляем.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-gts-ulyanovsk",
+      "source_file": "sto-ulyanovsk-orenburg-tambov-mordovia-batch16-2026-11-27.json",
+      "source_id": "gts-ulyanovsk",
+      "name": "ГТС-Сервис",
+      "address": "Ульяновская область, Ульяновск, Московское шоссе, 60",
+      "phone": "+78422732373",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://gts-parts.ru/автосервис/"
+      ],
+      "notes": "Доп. рабочий номер +7 905 349-23-73.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-samarascan-ulyanovsk",
+      "source_file": "sto-ulyanovsk-orenburg-tambov-mordovia-batch16-2026-11-27.json",
+      "source_id": "samarascan-ulyanovsk",
+      "name": "Самара-Скан — Ульяновск",
+      "address": "Ульяновская область, Ульяновск, просп. Аполлона Сысцова, 10",
+      "phone": "+79278262788",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://centr-sany.ru/ulyanovsk/service/sitrak/",
+        "https://centr-sany.ru/ulyanovsk/service/sany/"
+      ],
+      "notes": "Прямой номер отдела сервиса; заявлены 16 постов.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-veselkin-haldex-ulyanovsk",
+      "source_file": "sto-ulyanovsk-orenburg-tambov-mordovia-batch16-2026-11-27.json",
+      "source_id": "veselkin-haldex-ulyanovsk",
+      "name": "ИП Весёлкин — Haldex",
+      "address": "Ульяновская область, Ульяновск, ул. Герасимова, 10К",
+      "phone": "+79033203271",
+      "evidence": "manufacturer_network",
+      "source_urls": [
+        "https://www.haldex-pts.ru/rus/servis-centr/?city=ulyanovsk"
+      ],
+      "notes": "Профильный сервис из списка дистрибьютора, не универсальное СТО.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-geosystem-ulyanovsk",
+      "source_file": "sto-ulyanovsk-orenburg-tambov-mordovia-batch16-2026-11-27.json",
+      "source_id": "geosystem-ulyanovsk",
+      "name": "ГЕОСистем",
+      "address": "Ульяновская область, Ульяновск, Лесной проезд, 8А",
+      "phone": "+78422240888",
+      "evidence": "manufacturer_network",
+      "source_urls": [
+        "https://www.haldex-pts.ru/rus/servis-centr/?city=ulyanovsk"
+      ],
+      "notes": "Профильный сервис из списка дистрибьютора; часы и текущее обслуживание уточнить.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-eurotruck-orenburg",
+      "source_file": "sto-ulyanovsk-orenburg-tambov-mordovia-batch16-2026-11-27.json",
+      "source_id": "eurotruck-orenburg",
+      "name": "Euro Truck",
+      "address": "Оренбургская область, Оренбург, Загородное шоссе, 3/4",
+      "phone": "+79096080240",
+      "evidence": "business_hosted_page",
+      "source_urls": [
+        "https://euro-truck.clients.site/"
+      ],
+      "notes": "Публичная бизнес-страница на платформе Яндекса; график уточнить.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-gruzexpert-orsk",
+      "source_file": "sto-ulyanovsk-orenburg-tambov-mordovia-batch16-2026-11-27.json",
+      "source_id": "gruzexpert-orsk",
+      "name": "Грузовой Эксперт",
+      "address": "Оренбургская область, Орск, ул. Союзная, 9А",
+      "phone": "+73537339966",
+      "evidence": "business_hosted_page",
+      "source_urls": [
+        "https://gruzovoj-ekspert.clients.site/"
+      ],
+      "notes": "Публичная бизнес-страница на платформе Яндекса; часы и тоннаж уточнить.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-tambovmaz-zeleny-gay",
+      "source_file": "sto-ulyanovsk-orenburg-tambov-mordovia-batch16-2026-11-27.json",
+      "source_id": "tambovmaz-zeleny-gay",
+      "name": "ТамбовМАЗсервис",
+      "address": "Тамбовская область, Мичуринский район, пос. Зелёный Гай, ул. Автозаводская, 2А",
+      "phone": "+74754524950",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://xn--68-dlcduhap7as7a4c.xn--p1ai/контакты/"
+      ],
+      "notes": "Доп. +7 910 750-03-62.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-azimut-kamaz-tambov",
+      "source_file": "sto-ulyanovsk-orenburg-tambov-mordovia-batch16-2026-11-27.json",
+      "source_id": "azimut-kamaz-tambov",
+      "name": "КАМАЗ-Центр Азимут",
+      "address": "Тамбовская область, Тамбов, бульвар Строителей, 5Л",
+      "phone": "+74752501415",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://sto.kamaz-tambov.ru/contacts/"
+      ],
+      "notes": "ООО Азимут-Гарантия по сайту; номер с официальной страницы предпочтительнее отличающегося в справочнике.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-truckcenter68-otrog",
+      "source_file": "sto-ulyanovsk-orenburg-tambov-mordovia-batch16-2026-11-27.json",
+      "source_id": "truckcenter68-otrog",
+      "name": "Трак Центр Тамбов",
+      "address": "Тамбовская область, Тамбовский район, д. Отрог, 1",
+      "phone": "+79156650000",
+      "evidence": "first_party_and_directory",
+      "source_urls": [
+        "https://truckcenter68.ru/",
+        "https://car.ms/autoservices/truck-service/tambov/"
+      ],
+      "notes": "Прямой номер автосервиса с собственного сайта. Справочник указывает Отрог, 2 и +7 4752 45-99-99; email из справочника, уточнить адрес въезда.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-kamaz-avtotehcentr-tambov",
+      "source_file": "sto-ulyanovsk-orenburg-tambov-mordovia-batch16-2026-11-27.json",
+      "source_id": "kamaz-avtotehcentr-tambov",
+      "name": "Автотехцентр — КАМАЗ",
+      "address": "Тамбовская область, Тамбов, ул. Авиационная, 143А",
+      "phone": "+78002224919",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://remgruzovik.ru/"
+      ],
+      "notes": "Общий номер предприятия, запросить прямую приемку.",
+      "timezone": null,
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-teko-tambov",
+      "source_file": "sto-ulyanovsk-orenburg-tambov-mordovia-batch16-2026-11-27.json",
+      "source_id": "teko-tambov",
+      "name": "ТЭКО-Сервис — ремонтная площадка",
+      "address": "Тамбовская область, Тамбов, проезд Монтажников, 2А/1",
+      "phone": "+79158810101",
+      "evidence": "first_party_and_directory",
+      "source_urls": [
+        "https://www.tekoservice.ru/",
+        "https://car.ms/autoservices/truck-service/tambov/"
+      ],
+      "notes": "На сайте компании заявлен грузовой ремонт; адрес и телефон ремзоны из справочника. Основной бизнес — вывоз отходов, прием сторонних клиентов уточнить.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-luidor-kamaz-saransk",
+      "source_file": "sto-ulyanovsk-orenburg-tambov-mordovia-batch16-2026-11-27.json",
+      "source_id": "luidor-kamaz-saransk",
+      "name": "КАМАЗ-Центр Луидор",
+      "address": "Республика Мордовия, Саранск, ул. Пролетарская, 142А",
+      "phone": "+78342226587",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://sto.saransk-kamaz.ru/contacts/",
+        "https://sto.saransk-kamaz.ru/uslugi/",
+        "https://sto.luidor-rm.ru/contacts/"
+      ],
+      "notes": "По тому же адресу опубликован другой номер сервиса +7 8342 37-03-99; не создавать дубль.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-fred13-saransk",
+      "source_file": "sto-ulyanovsk-orenburg-tambov-mordovia-batch16-2026-11-27.json",
+      "source_id": "fred13-saransk",
+      "name": "Грузовой автосервис FRED13",
+      "address": "Республика Мордовия, Саранск, ул. 2-я Промышленная, 10А",
+      "phone": "+79047212414",
+      "evidence": "first_party_index_and_directory_crosscheck",
+      "source_urls": [
+        "https://fred13.ru/",
+        "https://mestam.info/ru/saransk/mesto/5529250-gruzovoi-avtoservis-promishlennaya-2-ya-10a",
+        "https://car.ms/autoservices/truck-service/saransk/"
+      ],
+      "notes": "Сайт не открылся напрямую; профиль из индекса, телефон и адрес совпадают в двух справочниках.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-astertrans-saransk",
+      "source_file": "sto-ulyanovsk-orenburg-tambov-mordovia-batch16-2026-11-27.json",
+      "source_id": "astertrans-saransk",
+      "name": "Астертранс",
+      "address": "Республика Мордовия, Саранск, ул. Строительная, 36, стр. 13 (справочник)",
+      "phone": "+78342291991",
+      "evidence": "first_party_and_directory",
+      "source_urls": [
+        "https://astertrans.com/uslugi-avtoservisa/",
+        "https://car.ms/autoservices/truck-service/saransk/"
+      ],
+      "notes": "Телефон корпоративного отдела с сайта. Сайт указывает адрес магазина 34, стр. 4; адрес ремонтной площадки уточнить до публикации.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-hdac-kaluga",
+      "source_file": "sto-kaluga-tula-ryazan-orel-batch17-2026-11-27.json",
+      "source_id": "hdac-kaluga",
+      "name": "Сервисный центр HD-AC",
+      "address": "Калужская область, Калуга, ул. Московская, 289, корп. 7",
+      "phone": "+74842570075",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://hd-ac.ru/"
+      ],
+      "notes": "Данные с сайта предприятия. Доп. email kamaz@kaluga.ru.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-autokontinent40-kaluga",
+      "source_file": "sto-kaluga-tula-ryazan-orel-batch17-2026-11-27.json",
+      "source_id": "autokontinent40-kaluga",
+      "name": "Автоконтинент 40",
+      "address": "Калужская область, Калуга, Грабцевский проезд, 8",
+      "phone": "+74842278484",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://truckavto.com/"
+      ],
+      "notes": "Доп. телефон приемки +7 930 841-55-22.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-efura-kaluga",
+      "source_file": "sto-kaluga-tula-ryazan-orel-batch17-2026-11-27.json",
+      "source_id": "efura-kaluga",
+      "name": "Еврофура",
+      "address": "Калужская область, Калуга, Грабцевское шоссе, 22",
+      "phone": "+79105123275",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://efura.ru/contacts",
+        "https://efura.ru/"
+      ],
+      "notes": "Доп. телефон записи +7 4842 777-575.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-globalavto-tula",
+      "source_file": "sto-kaluga-tula-ryazan-orel-batch17-2026-11-27.json",
+      "source_id": "globalavto-tula",
+      "name": "ГлобалАвто",
+      "address": "Тульская область, Щёкинский район, д. Пироговка-Ульяновка, 2А",
+      "phone": "+79156844774",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://globalavto71.ru/"
+      ],
+      "notes": "Номер именно сервиса, не отдела запчастей.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-ngservice-barsuki",
+      "source_file": "sto-kaluga-tula-ryazan-orel-batch17-2026-11-27.json",
+      "source_id": "ngservice-barsuki",
+      "name": "НерудГрупп Сервис",
+      "address": "Тульская область, пос. Барсуки, ул. Песочная, 35",
+      "phone": "+79051169527",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://ngservice71.ru/"
+      ],
+      "notes": "Эвакуация: +7 961 261-69-00.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-atlservice-barsuki",
+      "source_file": "sto-kaluga-tula-ryazan-orel-batch17-2026-11-27.json",
+      "source_id": "atlservice-barsuki",
+      "name": "АТЛ Сервис",
+      "address": "Тульская область, пос. Барсуки, ул. Мелиоративная, 1",
+      "phone": "+79066225584",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://atltransservice.ru/"
+      ],
+      "notes": "Тот же номер для грузовой эвакуации.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-ostavto-ryazan",
+      "source_file": "sto-kaluga-tula-ryazan-orel-batch17-2026-11-27.json",
+      "source_id": "ostavto-ryazan",
+      "name": "ОСТ-АВТО",
+      "address": "Рязанская область, Рязань, ул. Связи, 25, стр. 2",
+      "phone": "+79611308870",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://ostavto.ru/"
+      ],
+      "notes": "Сайт заявляет ремонт тормозных и пневматических систем прицепов.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-avtomet-ryazan",
+      "source_file": "sto-kaluga-tula-ryazan-orel-batch17-2026-11-27.json",
+      "source_id": "avtomet-ryazan",
+      "name": "АвтоМет",
+      "address": "Рязанская область, Рязань, 195-й км окружной дороги М-5 Урал, стр. 2",
+      "phone": "+79155907265",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://avtomet-r.ru/",
+        "https://avtomet-r.ru/services/remont-gruzovyh-avtomobilej/"
+      ],
+      "notes": "Прямой номер сервиса; доп. +7 4912 92-55-55.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-avtotransremont-orel",
+      "source_file": "sto-kaluga-tula-ryazan-orel-batch17-2026-11-27.json",
+      "source_id": "avtotransremont-orel",
+      "name": "Автотрансремонт",
+      "address": "Орловская область, Орёл, Новосильское шоссе, 11, офис 1",
+      "phone": "+79192692177",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://avtotransremont.ru/"
+      ],
+      "notes": "Доп. телефоны +7 910 305-10-88, +7 910 748-40-01, +7 4862 48-40-01. Въезд в ремонтную зону уточнить.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-lider-nikulichi",
+      "source_file": "sto-kaluga-tula-ryazan-orel-batch17-2026-11-27.json",
+      "source_id": "lider-nikulichi",
+      "name": "Лидер",
+      "address": "Орловская область, Орловский район, д. Никуличи, ул. Наугорская, 27",
+      "phone": "+79192697777",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://lider-ts.ru/kontakty/",
+        "https://lider-ts.ru/"
+      ],
+      "notes": "Данные с сайта предприятия.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-servicecentrum-orel",
+      "source_file": "sto-kaluga-tula-ryazan-orel-batch17-2026-11-27.json",
+      "source_id": "servicecentrum-orel",
+      "name": "Сервисный центр Centrum",
+      "address": "Орловская область, Орёл, Московское шоссе, 173",
+      "phone": "+79200888011",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://service-centrum.ru/"
+      ],
+      "notes": "Телефон именно ремонта; +7 920 088-80-22 относится к запчастям.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-avtotrak-suponevo",
+      "source_file": "sto-bryansk-kursk-belgorod-astrakhan-batch18-2026-11-27.json",
+      "source_id": "avtotrak-suponevo",
+      "name": "АвтоТрак",
+      "address": "Брянская область, с. Супонево, ул. Ленина, 141",
+      "phone": "+79610038193",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://avtotrak32.ru/"
+      ],
+      "notes": "Отдельный шиномонтаж +7 910 034-43-33.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-sovavto-sven",
+      "source_file": "sto-bryansk-kursk-belgorod-astrakhan-batch18-2026-11-27.json",
+      "source_id": "sovavto-sven",
+      "name": "СовАвто-Сервис",
+      "address": "Брянская область, пос. Свень, ул. Соборная, 21",
+      "phone": "+79610040542",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://sta.bryansk.ru/kontakty/",
+        "https://sta.bryansk.ru/uslugi/servisnyj-czentr/"
+      ],
+      "notes": "Стол заказов +7 4832 63-93-93, диагностика +7 920 868-53-55, прицепы +7 910 299-73-01. Адрес юридический и почтовый на сайте; въезд в ремзону уточнить.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-agrozapchast-suponevo",
+      "source_file": "sto-bryansk-kursk-belgorod-astrakhan-batch18-2026-11-27.json",
+      "source_id": "agrozapchast-suponevo",
+      "name": "АгроЗапчасть",
+      "address": "Брянская область, с. Супонево, ул. Ленина, 131Б",
+      "phone": "+74832300032",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://www.agroms.ru/",
+        "https://agroms.ru/services/"
+      ],
+      "notes": "Общий телефон предприятия, запросить приемку.",
+      "timezone": null,
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-uf46-kursk",
+      "source_file": "sto-bryansk-kursk-belgorod-astrakhan-batch18-2026-11-27.json",
+      "source_id": "uf46-kursk",
+      "name": "У Француза",
+      "address": "Курская область, Курск, ул. Кирпичная, 21В",
+      "phone": "+79606749000",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://uf46.ru/"
+      ],
+      "notes": "Номер мастера-приемщика с сайта.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-furgon46-kursk",
+      "source_file": "sto-bryansk-kursk-belgorod-astrakhan-batch18-2026-11-27.json",
+      "source_id": "furgon46-kursk",
+      "name": "Фургон Сервис",
+      "address": "Курская область, Курск, ул. Магистральная, 11",
+      "phone": "+79513228338",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://furgon-service46.ru/"
+      ],
+      "notes": "Специализированный кузовной сервис, не универсальное СТО.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-amk-shacman-kursk",
+      "source_file": "sto-bryansk-kursk-belgorod-astrakhan-batch18-2026-11-27.json",
+      "source_id": "amk-shacman-kursk",
+      "name": "SHACMAN РФ — АМККОМТРАНС",
+      "address": "Курская область, Курск, ул. 50 лет Октября, 124Д",
+      "phone": "+74712360257",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://shacmanrf.ru/servis-shacman-rf/"
+      ],
+      "notes": "Доп. корпоративная почта amkcomtrans@bk.ru.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-dalsto-severny",
+      "source_file": "sto-bryansk-kursk-belgorod-astrakhan-batch18-2026-11-27.json",
+      "source_id": "dalsto-severny",
+      "name": "Дальнобойщик — Северный",
+      "address": "Белгородская область, пос. Северный, ул. Берёзовая, 3, стр. 4",
+      "phone": "+79205868374",
+      "evidence": "first_party_and_directory",
+      "source_urls": [
+        "https://dalsto.ru/",
+        "https://car.ms/autoservices/truck-service/belgorod/"
+      ],
+      "notes": "Номер совпадает с карточкой карты. В справочнике оператор Дальнобойщик-Камион на том же адресе с другим номером; уточнить оператора. Общие контакты двух филиалов, не дублировать обращения.",
+      "timezone": null,
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-dalsto-belgorod",
+      "source_file": "sto-bryansk-kursk-belgorod-astrakhan-batch18-2026-11-27.json",
+      "source_id": "dalsto-belgorod",
+      "name": "Дальнобойщик — Белгород",
+      "address": "Белгородская область, Белгород, ул. Константина Заслонова, 52",
+      "phone": "+79205868374",
+      "evidence": "first_party_and_directory",
+      "source_urls": [
+        "https://dalsto.ru/",
+        "https://car.ms/autoservices/truck-service/belgorod/"
+      ],
+      "notes": "Общий телефон сети, прямой номер и корпус уточнить; справочник указывает 52 к2 и другое название/телефон, не создавать дубли.",
+      "timezone": null,
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-goodtrucks-severny",
+      "source_file": "sto-bryansk-kursk-belgorod-astrakhan-batch18-2026-11-27.json",
+      "source_id": "goodtrucks-severny",
+      "name": "ГудТракс",
+      "address": "Белгородская область, пос. Северный, ул. Транспортная, 14",
+      "phone": "+74722778800",
+      "evidence": "manufacturer_network",
+      "source_urls": [
+        "https://support.bpw-ost.ru/all-contacts/",
+        "https://manac-tsr.ru/service/"
+      ],
+      "notes": "Собственный сайт вернул 502; телефон подтвержден каталогом BPW и карточкой карты. Доп. +7 919 228-55-08.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-reftransservice-streletskoe",
+      "source_file": "sto-bryansk-kursk-belgorod-astrakhan-batch18-2026-11-27.json",
+      "source_id": "reftransservice-streletskoe",
+      "name": "РефТрансСервис",
+      "address": "Белгородская область, с. Стрелецкое, пер. Королёва, 35",
+      "phone": "+74722374188",
+      "evidence": "directory_crosscheck",
+      "source_urls": [
+        "https://car.ms/autoservices/truck-service/belgorod/",
+        "https://bel.auto2.info/belgorod/reftransservis-430000/"
+      ],
+      "notes": "Собственный сайт недоступен. Другой справочник указывает +7 905 170-01-53; уточнить действующий номер и населенный пункт.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-neys-yug-solyanka",
+      "source_file": "sto-bryansk-kursk-belgorod-astrakhan-batch18-2026-11-27.json",
+      "source_id": "neys-yug-solyanka",
+      "name": "Нейс-Юг",
+      "address": "Астраханская область, с. Солянка, ул. Элистинская, 10",
+      "phone": "+78512201018",
+      "evidence": "directory_and_map",
+      "source_urls": [
+        "https://urbanplaces.su/ru_astrahanskaya-oblast/narimanovskij-rajon-s-solyanka/card-3999289-nejs-yug",
+        "https://astrahan.jsprav.ru/tekhnicheskoe-obsluzhivanie-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Телефон совпадает с карточкой карты, адрес также указан как Р-22, 1383-й км; уточнить въезд и часы (источники расходятся). Доп. 8 800 500-03-90. Не подтвержден текущий дилерский статус.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    }
+  ],
+  "notes": "Draft only. Coordinates and activity not independently verified; conservative duplicate screening is not exhaustive."
+}
