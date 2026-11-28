@@ -69,6 +69,21 @@ function GeocodeTools({onSaved}:{onSaved:()=>void}){
  }
  return <details className="card stack"><summary>Массовое определение координат</summary><p className="note">Выгрузите адреса для разрешённого к коммерческому хранению геокодера. В JSON-результате сохраните id, revision, address и добавьте matchedAddress, lat, lng, accuracy (entrance, building или parcel), source (URL) и reuseAllowed: true. Не используйте центры городов. Импорт не публикует точки.</p><button className="btn ghost" disabled={busy} onClick={()=>void exportQueue()}>Выгрузить адреса JSON</button><label className="stack">Импорт результата JSON<input type="file" className="field" accept=".json,application/json" disabled={busy} onChange={e=>{const file=e.target.files?.[0];e.target.value='';void importFile(file);}}/></label>{note&&<p role="status">{note}</p>}</details>;
 }
+function PilotPublication({onSaved}:{onSaved:()=>void}){
+ type PilotItem={id:string;name:string;address:string;phone:string;lat:number;lng:number;evidence:string;status:string};
+ const [batch,setBatch]=useState<{batch:string;items:PilotItem[]}|null>(null),[checked,setChecked]=useState(false),[busy,setBusy]=useState(false),[note,setNote]=useState('');
+ const lock=useRef(false);
+ async function preview(){if(lock.current)return;lock.current=true;setBusy(true);setNote('');setChecked(false);try{setBatch(await get<{batch:string;items:PilotItem[]}>(root+'/pilot'));}catch(e){setNote(message(e));}finally{lock.current=false;setBusy(false);}}
+ async function publish(){if(!batch||!checked||lock.current)return;lock.current=true;setBusy(true);setNote('');try{const result=await post<{published:number;alreadyPublished:number;skipped:number}>(root+'/publish-pilot',{batch:batch.batch,confirmSourceReview:true});setNote('Опубликовано: '+result.published+'. Уже на карте: '+result.alreadyPublished+'. Пропущено: '+result.skipped+'.');setBatch(null);setChecked(false);onSaved();}catch(e){setNote(message(e));}finally{lock.current=false;setBusy(false);}}
+ return <details className="card stack"><summary>Первая партия на карту — проверенные адреса из сайтов СТО</summary>
+ <p className="note">Только сторонние организации, без статуса партнёра и без подтверждения фактической работы. Публикуются контактные факты; изменённые и скрытые карточки не затрагиваются.</p>
+ <button type="button" className="btn ghost" disabled={busy} onClick={()=>void preview()}>Проверить готовность первой партии</button>
+ {batch&&<><p>Готово к публикации: {batch.items.filter(p=>p.status==='ready').length} из {batch.items.length}</p>
+ <div className="stack">{batch.items.map(p=><div key={p.id} className="card"><b>{p.name}</b><small>{p.address} · {p.phone}</small><small>{p.lat}, {p.lng} · {p.status==='ready'?'Готово':p.status==='published'?'На карте':'Пропустить — изменено или отсутствует'}</small><a href={p.evidence} target="_blank" rel="noopener noreferrer">Сайт организации</a></div>)}</div>
+ <label><input type="checkbox" checked={checked} disabled={busy} onChange={e=>setChecked(e.target.checked)}/> Подтверждаю проверку источников и допустимость публикации контактных фактов.</label>
+ <button className="btn" disabled={busy||!checked||!batch.items.some(p=>p.status==='ready')} onClick={()=>void publish()}>Опубликовать первую партию на карте</button></>}
+ {note&&<p role="status">{note}</p>}</details>;
+}
 const initial={q:'',state:'',category:'',missingGps:false};
 export function AdminStoDirectory(){
  const [draft,setDraft]=useState(initial);const [filters,setFilters]=useState(initial);const [cursors,setCursors]=useState(['']);const [items,setItems]=useState<Item[]>([]);const [loading,setLoading]=useState(true);const [error,setError]=useState('');const [version,reload]=useState(0);
@@ -86,6 +101,7 @@ export function AdminStoDirectory(){
  <label className="stack">Специализация<select className="field" value={draft.category} onChange={e=>setDraft(d=>({...d,category:e.target.value}))}><option value="">Все</option>{Object.entries(categories).map(([k,v])=><option key={k} value={k}>{v}</option>)}</select></label>
  <label><input type="checkbox" checked={draft.missingGps} onChange={e=>setDraft(d=>({...d,missingGps:e.target.checked}))}/> Только без GPS</label>
  <button className="btn" type="submit">Найти</button><button className="btn ghost" type="button" onClick={()=>setEdit(null)}>Добавить СТО</button></form>
+ <PilotPublication onSaved={()=>reload(v=>v+1)}/>
  <GeocodeTools onSaved={()=>reload(v=>v+1)}/>
  {edit!==undefined&&<Editor key={edit?.id??'new'} item={edit} onSaved={saved} onCancel={()=>setEdit(undefined)}/>}
  {loading&&<p role="status">Загружаем справочник…</p>}{error&&<p className="banner bad" role="alert">{error} <button className="btn ghost small" onClick={()=>reload(v=>v+1)}>Повторить</button></p>}

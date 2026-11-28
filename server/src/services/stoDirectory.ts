@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import { STO_PILOT, STO_PILOT_BATCH } from './stoDirectoryPilot20261128.ts';
+import type { Queryable } from '../db/index.ts';
 import type { Db } from '../db/index.ts';
 import { bad, conflict, forbidden, notFound, parse, type AuthUser } from '../http/router.ts';
 
@@ -53,6 +55,32 @@ export class StoDirectory {
     result.push({id:p.id,status:saved?'saved':'skipped'});
    }
    return {saved:result.filter(p=>p.status==='saved').length,skipped:result.filter(p=>p.status==='skipped').length,result};
+  });
+ }
+ private async pilotState(q:Queryable,lock=false){
+  const items=[];
+  for(const p of STO_PILOT){
+   const row=await q.one<any>('select id,name,address,phone,category,lat,lng,services,hours,source,state,revision from sto_directory_sites where id=$1'+(lock?' for update':''),[p.id]);
+   const matches=!!row&&row.name===p.name&&row.address===p.address&&row.phone===p.phone&&row.category===p.category&&row.lat===p.lat&&row.lng===p.lng&&JSON.stringify(row.services)===JSON.stringify(p.services)&&row.hours===p.hours&&row.source===p.source;
+   const status=!matches?'changed_or_missing':row.state==='published'?'published':row.state==='draft'&&row.revision===1?'ready':'changed_or_missing';
+   items.push({...p,status});
+  }
+  return items;
+ }
+ async pilotPreview(){return {batch:STO_PILOT_BATCH,items:await this.pilotState(this.db)};}
+ async publishPilot(user:AuthUser,body:unknown){
+  parse(z.object({batch:z.literal(STO_PILOT_BATCH),confirmSourceReview:z.literal(true)}).strict(),body);
+  return this.db.tx(async q=>{
+   const items=await this.pilotState(q,true);
+   let published=0;
+   for(const p of items){
+    if(p.status!=='ready')continue;
+    const row=await q.one(`update sto_directory_sites set state='published',source_reuse_checked=true,location_checked=true,
+     reviewed_by=$2,reviewed_at=now(),revision=revision+1,updated_at=now()
+     where id=$1 and state='draft' and revision=1 returning id`,[p.id,user.id]);
+    if(row)published++;
+   }
+   return {published,alreadyPublished:items.filter(p=>p.status==='published').length,skipped:items.filter(p=>p.status==='changed_or_missing').length};
   });
  }
  async create(body:unknown){

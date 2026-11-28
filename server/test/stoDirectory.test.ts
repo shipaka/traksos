@@ -42,3 +42,22 @@ test('geocode batch only changes matching missing-GPS drafts; never publishes or
  assert.equal(row?.state,'draft');assert.equal(row?.location_checked,false);assert.equal(row?.geocode_accuracy,'building');
  assert.deepEqual(ok(await t.api('GET','/api/public/sto-directory')).points,[]);
 });
+
+test('first-party map pilot publishes only unchanged drafts through admin approval',async()=>{
+ const root='/api/admin/sto-directory';
+ assert.equal((await t.api('GET',root+'/pilot',undefined,client.token)).status,403);
+ const pilot=ok(await t.api('GET',root+'/pilot',undefined,admin.token));
+ assert.equal(pilot.items.length,11);
+ assert.equal(pilot.items.filter((x:any)=>x.status==='ready').length,11);
+ assert.equal((await t.api('POST',root+'/publish-pilot',{batch:pilot.batch,confirmSourceReview:true},client.token)).status,403);
+ assert.equal((await t.api('POST',root+'/publish-pilot',{batch:pilot.batch,confirmSourceReview:false},admin.token)).status,400);
+ const held=pilot.items[0].id;
+ ok(await t.api('PUT',root+'/'+held+'/review',{revision:1,state:'hidden',sourceReuseChecked:false,locationChecked:false},admin.token));
+ const result=ok(await t.api('POST',root+'/publish-pilot',{batch:pilot.batch,confirmSourceReview:true},admin.token));
+ assert.equal(result.published,10);assert.equal(result.skipped,1);
+ const points=ok(await t.api('GET','/api/public/sto-directory')).points;
+ assert.equal(points.length,10);assert.ok(points.every((p:any)=>p.directory===true&&p.id!==held&&Number.isFinite(p.lat)&&Number.isFinite(p.lng)));
+ assert.deepEqual(ok(await t.api('GET','/api/public/partner-map')).points,[]);
+ const again=ok(await t.api('POST',root+'/publish-pilot',{batch:pilot.batch,confirmSourceReview:true},admin.token));
+ assert.equal(again.published,0);assert.equal(again.alreadyPublished,10);assert.equal(again.skipped,1);
+});
