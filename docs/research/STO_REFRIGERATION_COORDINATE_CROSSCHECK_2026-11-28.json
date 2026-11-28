@@ -1,0 +1,91 @@
+{
+  "schema": "sto-coordinate-crosscheck-v1",
+  "checked_on": "2026-11-28",
+  "base_commit": "ca78d12055d14d334729d267e7cde4e3b156e958",
+  "publication_status": "draft_review_only",
+  "notes": "Contact matches do not prove a coordinate's building/entrance accuracy. Distributor coordinates remain source-reported; independent map or first-party GPS and reuse review still required. No publication or database writes.",
+  "records": [
+    {
+      "id": "directory:b41-resize-fedorovskoe",
+      "name": "Ре-Сайз",
+      "contact_source": "https://refsize.ru/contacts",
+      "address_match": true,
+      "phone_match": true,
+      "reported_hours": "ежедневно 09:00–21:00",
+      "gps_source": "https://sivtrans.ru/diller-service/",
+      "gps": [
+        59.661902,
+        30.546636
+      ],
+      "decision": "contact_confirmed_gps_pending"
+    },
+    {
+      "id": "directory:b41-refsib",
+      "name": "Реф Сиб Сервис",
+      "contact_source": "https://refsib.ru/?page_id=46",
+      "address_match": true,
+      "phone_match": true,
+      "gps_source": "https://sivtrans.ru/diller-service/",
+      "gps": [
+        55.004432,
+        82.786832
+      ],
+      "decision": "contact_confirmed_gps_pending"
+    },
+    {
+      "id": "directory:b41-holodtrans-suponevo",
+      "name": "Холодтранс",
+      "contact_source": "https://www.holod-trans.ru/",
+      "address_match": true,
+      "phone_match": true,
+      "address_detail": "офис 1",
+      "gps_source": "https://sivtrans.ru/diller-service/",
+      "gps": [
+        53.21255,
+        34.296797
+      ],
+      "decision": "contact_confirmed_gps_pending"
+    },
+    {
+      "id": "directory:b41-kurgantransholod",
+      "name": "Кургантрансхолод",
+      "contact_source": "https://transholod45.ru/kontakty",
+      "address_match": false,
+      "phone_match": true,
+      "address_detail": "Омская, 134, корп. 1 (сервис), в каталоге только 134",
+      "gps_source": "https://sivtrans.ru/diller-service/",
+      "gps": [
+        55.469887,
+        65.374976
+      ],
+      "decision": "hold_building_review"
+    },
+    {
+      "id": "directory:b41-termosfera",
+      "name": "ТермоСфера",
+      "contact_source": "https://termorem.ru/",
+      "address_match": false,
+      "phone_match": false,
+      "address_detail": "Петровское, вл.4с5 вместо вл.4с6; официальный телефон Селятино отличается от карточки",
+      "gps_source": "https://sivtrans.ru/diller-service/",
+      "gps": [
+        55.528416,
+        36.981673
+      ],
+      "decision": "hold_address_and_phone_conflict"
+    },
+    {
+      "id": "directory:b41-atlantic-artem",
+      "name": "Атлантик — Артём",
+      "contact_source": "https://dvref.ru/",
+      "decision": "hold_first_party_unavailable"
+    },
+    {
+      "id": "directory:b41-transholod-ekb",
+      "name": "ТрансХолод",
+      "contact_source": "https://tsholod.ru/",
+      "decision": "hold_first_party_unavailable",
+      "notes": "Другой справочник указывает 2А/9; не принимать за подтверждение."
+    }
+  ]
+}
