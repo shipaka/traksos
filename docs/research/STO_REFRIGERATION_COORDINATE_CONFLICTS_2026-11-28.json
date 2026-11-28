@@ -1,0 +1,75 @@
+{
+  "schema": "sto-coordinate-crosscheck-v1",
+  "checked_on": "2026-11-28",
+  "publication_status": "draft_review_only",
+  "records": [
+    {
+      "id": "directory:b41-holodtrans-suponevo",
+      "decision": "coordinate_discrepancy_review",
+      "official": "https://www.holod-trans.ru/contacts/",
+      "official_contact_match": true,
+      "official_address_detail": "офис 1",
+      "hours": "Пн–Пт 10:00–19:00; Сб 10:00–14:00; Вс выходной",
+      "original_gps": [
+        53.21255,
+        34.296797
+      ],
+      "comparison_source": "https://avtoholod74.ru/regionalnaja-set/",
+      "comparison_source_availability": "search_index_only; direct fetch 502",
+      "comparison_gps": [
+        53.20916666666667,
+        34.30083333333333
+      ],
+      "notes": "Different reported coordinates; cannot choose the correct building/entrance. Do not copy comparison GPS to public map."
+    },
+    {
+      "id": "directory:b41-siv-krasnodar",
+      "decision": "hold_branch_identity",
+      "original_address": "Краснодар, Восточный обход, 5/2",
+      "original_phone": "+79282705831",
+      "original_gps": [
+        44.954228,
+        39.121327
+      ],
+      "official": "https://www.sivrostov.ru/about/contacts",
+      "official_listed_sites": [
+        "Ростовская область, Аксай, Западная, 37",
+        "Ростовская область, х. Маяковского, Заводская, 34"
+      ],
+      "notes": "Distributor lists Krasnodar; operator contact page does not. Current existence of Krasnodar branch and local phone not confirmed. Do not replace with Rostov sites or assert closure."
+    },
+    {
+      "id": "directory:b41-translider-samara",
+      "decision": "hold_address_and_phone_conflict",
+      "original_address": "Самара, пос. Спутник, Придорожная, 21",
+      "original_phone": "+78469791701",
+      "original_gps": [
+        53.259407,
+        50.416903
+      ],
+      "official": "https://webasto-leader.ru/kontakty",
+      "official_location_text": "пос. Энергетик, трасса 36А-144",
+      "official_service_phones": [
+        "+78462736752",
+        "+78462600002"
+      ],
+      "notes": "Possible different site or outdated company page; exact location and phone must be reconciled; no change to existing draft."
+    },
+    {
+      "id": "directory:b41-yuzhuraltransholod",
+      "decision": "address_corroborated_gps_pending",
+      "original_gps": [
+        54.993366,
+        61.175713
+      ],
+      "comparison_sources": [
+        "https://rting.ru/chelyabinsk/co/yuzhuraltransholod/4396401",
+        "https://chelyabinsk.spravka.city/company/yuzhuraltransholod"
+      ],
+      "official": "https://avtoholod74.ru/kontakty/",
+      "official_availability": "timeout",
+      "notes": "Address corroborated by business directories, but official contact and precise coordinates not independently confirmed."
+    }
+  ],
+  "notes": "No changed GPS or public data; all four remain draft. Source reuse and live operating status unverified."
+}
