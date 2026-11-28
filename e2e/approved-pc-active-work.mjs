@@ -138,6 +138,50 @@ try{
  await assertMasterClean('master order tabs and proposals');
  report.push({role:'master',status:'PASS',scenarios:['selected work','status sequence','TechBase','case tabs','offers mode'],
    screenshots:['master-active-1647.png','master-en-route-1647.png','master-new-proposals-1647.png']});
+ // Separate synthetic availability response: confirmed state only, timed break and on-job guard.
+ let line='offline', deadline=null, failLine=false, writes=0;
+ await page.route(url=>url.pathname==='/api/me',async route=>{
+   if(route.request().method()!=='GET')return route.continue();
+   const response=await route.fetch();
+   const account=await response.json();
+   await route.fulfill({response,json:{...account,performer:{...account.performer,line_status:line,busy_until:deadline}}});
+ });
+ await page.route(url=>url.pathname==='/api/performer/line',async route=>{
+   const body=route.request().postDataJSON();writes++;
+   if(failLine)return route.fulfill({status:409,contentType:'application/json',body:JSON.stringify({code:'on_job',message:'Статус не изменён'})});
+   if(body.lineStatus==='busy'){
+     const duration=Date.parse(body.busyUntil)-Date.now();
+     assert(duration>14*60000&&duration<=16*60000,'Timed break deadline incorrect');
+   }
+   line=body.lineStatus;deadline=body.busyUntil??null;
+   await route.fulfill(json({line_status:line,busy_until:deadline}));
+ });
+ await page.reload({waitUntil:'domcontentloaded'});
+ const availability=page.getByLabel('Доступность исполнителя',{exact:true});
+ const offline=availability.getByRole('button',{name:/Статус · Не на линии/});
+ await offline.waitFor();
+ await offline.click();
+ await availability.getByRole('button',{name:'На линии',exact:true}).click();
+ const online=availability.getByRole('button',{name:/Статус · На линии/});
+ await online.waitFor();
+ await online.click();
+ await availability.getByRole('button',{name:'Перерыв · выбрать время'}).click();
+ await availability.getByRole('button',{name:'15 мин',exact:true}).click();
+ const paused=availability.getByRole('button',{name:/Статус · Перерыв/});
+ await paused.waitFor();
+ await availability.getByText(/Перерыв до/).waitFor();
+ await paused.click();
+ failLine=true;
+ await availability.getByRole('button',{name:'Не на линии',exact:true}).click();
+ await page.waitForFunction(()=>!document.querySelector('[aria-label="Доступность исполнителя"] button')?.disabled);
+ assert(await paused.isVisible(),'Rejected mutation changed displayed status');
+ assert(writes===3,'Unexpected number of status writes');
+ line='on_job';
+ await page.reload({waitUntil:'domcontentloaded'});
+ const locked=page.getByRole('button',{name:/Статус · На выезде/});
+ await locked.waitFor();
+ assert(await locked.isDisabled(),'On-job availability action not locked');
+ await assertMasterClean('master availability');
  await ctx.close();
 
  const owner=await account({phone:'+79990000472',type:'owner',mode:'client'});
